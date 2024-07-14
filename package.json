@@ -4,11 +4,23 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun --watch server/index.ts",
-    "start": "bun server/index.ts"
+    "dev": "vite",
+    "build": "vite build",
+    "server": "bun run server/index.ts"
+  },
+  "dependencies": {
+    "vue": "*",
+    "@tailwindcss/vite": "*",
+    "tailwindcss": "*",
+    "@xterm/xterm": "*",
+    "@xterm/addon-fit": "*"
   },
   "devDependencies": {
+    "@vitejs/plugin-vue": "*",
+    "typescript": "*",
+    "vite": "*",
+    "vue-tsc": "*",
     "@types/bun": "*",
-    "typescript": "*"
+    "@types/node": "*"
   }
 }

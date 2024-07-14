@@ -1,3 +1,4 @@
+import { resolve } from 'path'
 import { config } from './config'
 import { k8s, k8sGet } from './k8s'
 import { metrics } from './metrics'
@@ -149,6 +150,15 @@ const server = Bun.serve({
         return Response.json(updateThreshold(body.id, warn, crit))
       }
     }
+
+    // --- Static files (SPA) ---
+    const distRoot = resolve('dist')
+    const requestedPath = resolve(distRoot, '.' + (url.pathname === '/' ? '/index.html' : url.pathname))
+    if (!requestedPath.startsWith(distRoot)) return new Response('Forbidden', { status: 403 })
+    const file = Bun.file(requestedPath)
+    if (await file.exists()) return new Response(file)
+    const index = Bun.file(`${distRoot}/index.html`)
+    if (await index.exists()) return new Response(index)
 
     return new Response('Not found', { status: 404 })
   },

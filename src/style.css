@@ -1,0 +1,21 @@
+@import 'tailwindcss';
+@import '@xterm/xterm/css/xterm.css';
+
+body {
+  margin: 0;
+  background: #09090b;
+  color: #d4d4d8;
+  font-family: ui-monospace, 'JetBrains Mono', monospace;
+}
+
+.bg-void { background: #09090b; }
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #27272a; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+
+.row-hover:hover { background: rgba(39, 39, 42, 0.3); }
+
+/* Progress bars inside tables */
+.h-3 { height: 0.75rem; }
