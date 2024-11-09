@@ -26,7 +26,7 @@ const expandedEvent = ref(-1)
         {{ t }}
         <span class="text-zinc-600 ml-0.5">{{ t === 'events' ? events.length : certificates.length }}</span>
       </button>
-      <button @click="loadEvents" class="text-xs text-zinc-600 hover:text-zinc-400 ml-auto">\u21BB</button>
+      <button @click="loadEvents" class="text-xs text-zinc-600 hover:text-zinc-400 ml-auto">↻</button>
     </div>
 
     <div v-if="active === 'events'">
@@ -49,7 +49,7 @@ const expandedEvent = ref(-1)
                 :class="[e.type === 'Warning' ? 'text-amber-300/80' : 'text-zinc-400', expandedEvent === i ? 'bg-zinc-800/30' : 'row-hover']"
                 @click="expandedEvent = expandedEvent === i ? -1 : i">
                 <td class="px-2 py-0.5 text-zinc-600 whitespace-nowrap">{{ timeAgo(e.time) }}</td>
-                <td class="px-2 py-0.5" :class="e.type === 'Warning' ? 'text-amber-400' : 'text-zinc-500'">{{ e.type === 'Warning' ? '\u26A0' : '\u00B7' }}</td>
+                <td class="px-2 py-0.5" :class="e.type === 'Warning' ? 'text-amber-400' : 'text-zinc-500'">{{ e.type === 'Warning' ? '⚠' : '·' }}</td>
                 <td class="px-2 py-0.5 text-zinc-500">{{ e.namespace }}</td>
                 <td class="px-2 py-0.5 max-w-36 truncate">{{ e.object }}</td>
                 <td class="px-2 py-0.5">{{ e.reason }}</td>
@@ -80,7 +80,7 @@ const expandedEvent = ref(-1)
           </thead>
           <tbody>
             <tr v-for="cert in certificates" :key="cert.name" class="row-hover border-b border-zinc-800/30">
-              <td class="px-2 py-0.5" :class="cert.ready ? 'text-emerald-400' : 'text-red-400'">{{ cert.ready ? '\u25CF' : '\u2715' }}</td>
+              <td class="px-2 py-0.5" :class="cert.ready ? 'text-emerald-400' : 'text-red-400'">{{ cert.ready ? '●' : '✕' }}</td>
               <td class="px-2 py-0.5 text-zinc-500">{{ cert.namespace }}</td>
               <td class="px-2 py-0.5 text-zinc-300">{{ cert.name }}</td>
               <td class="px-2 py-0.5 text-right" :class="daysUntil(cert.notAfter) < 14 ? 'text-amber-400' : 'text-zinc-600'">{{ daysUntil(cert.notAfter) }}d</td>

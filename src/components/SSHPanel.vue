@@ -17,7 +17,7 @@ onMounted(loadSSH)
         <span class="text-red-400">invalid-user:{{ sshAttacks.invalidUsers }}</span>
         <span v-if="sshAttacks.failedPasswords" class="text-red-500">failed-pw:{{ sshAttacks.failedPasswords }}</span>
         <span class="text-zinc-600">probes:{{ sshAttacks.probes }}</span>
-        <button @click="loadSSH" class="text-zinc-600 hover:text-zinc-400 ml-auto">\u21BB</button>
+        <button @click="loadSSH" class="text-zinc-600 hover:text-zinc-400 ml-auto">↻</button>
       </div>
       <div class="flex gap-2 text-xs flex-wrap items-center">
         <span class="text-zinc-600">IPs ({{ sshAttacks.topIPs?.length }}):</span>

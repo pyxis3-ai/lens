@@ -13,7 +13,7 @@ const showAllIPs = ref(false)
       <span class="text-zinc-500">ATTACKS</span>
       <span class="text-zinc-400">1h:<span class="text-amber-400">{{ attackStats.last1h }}</span></span>
       <span class="text-zinc-400">24h:<span class="text-amber-400">{{ attackStats.last24h }}</span></span>
-      <button @click="loadAttacks" class="text-zinc-600 hover:text-zinc-400">\u21BB</button>
+      <button @click="loadAttacks" class="text-zinc-600 hover:text-zinc-400">↻</button>
     </div>
 
     <div v-if="attackStats?.topIPs?.length" class="flex gap-3 mb-2 text-xs flex-wrap items-center">

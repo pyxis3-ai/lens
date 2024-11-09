@@ -32,8 +32,8 @@ defineProps<{ data: SystemMetrics | null }>()
       <span :class="metricColor(data.disk.percent, 70, 90)">{{ data.disk.percent }}%</span>
     </div>
     <div class="flex items-center gap-2 text-zinc-600 ml-auto">
-      <span><span class="text-emerald-400">\u2193</span>{{ formatRate(data.network.rxRate) }}</span>
-      <span><span class="text-blue-400">\u2191</span>{{ formatRate(data.network.txRate) }}</span>
+      <span><span class="text-emerald-400">↓</span>{{ formatRate(data.network.rxRate) }}</span>
+      <span><span class="text-blue-400">↑</span>{{ formatRate(data.network.txRate) }}</span>
       <span>tcp:{{ data.network.connections }}</span>
       <span>load:{{ data.cpu.load1.toFixed(1) }}</span>
       <span>up:{{ formatUptime(data.uptime) }}</span>
