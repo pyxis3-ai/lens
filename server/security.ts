@@ -2,7 +2,6 @@ import { readFile } from 'fs/promises'
 import { k8s } from './k8s'
 import { config } from './config'
 
-
 export const security = {
   async summary() {
     const f2b = await this.fail2ban()
@@ -107,7 +106,7 @@ export const security = {
 
   async authelia() {
     const pods = await k8s.podsByLabel(config.autheliaNamespace, config.autheliaLabel)
-    if (!pods.length) return { requests: 0, blocked: 0, byHost: {} as Record<string, number>, recent: [] as any[] }
+    if (!pods.length) return { requests: 0, blocked: 0, byHost: {} as Record<string, number>, recent: [] as { time: string; host: string; user: string; status: number; method: string }[] }
 
     const lines = await k8s.podLogs('authelia', pods[0], undefined, 200)
     let requests = 0, blocked = 0

@@ -55,7 +55,7 @@ function connect() {
 
     // Watch for container resize
     resizeObserver = new ResizeObserver(() => {
-      try { fitAddon?.fit() } catch {}
+      try { fitAddon?.fit() } catch { /* resize may fail during teardown */ }
     })
     resizeObserver.observe(termEl.value)
 
