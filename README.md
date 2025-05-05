@@ -56,7 +56,3 @@ The big Kubernetes dashboards (Lens Desktop, Headlamp, Octant) are great but hea
 ## Status
 
 Single-developer project, used in my own homelab and reference deployments. Read-only by default; exec is gated behind RBAC.
-
-## Author
-
-[Omar A.](https://github.com/oabdrabo) · AI infrastructure engineer · [LinkedIn](https://linkedin.com/in/oabdrabo)
