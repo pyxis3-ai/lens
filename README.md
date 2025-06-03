@@ -4,6 +4,8 @@ A lightweight Kubernetes observability and exec dashboard. Read-only views over 
 
 Built to run inside the cluster (uses the in-pod service-account token), so it requires zero kubeconfig wrangling.
 
+**Demo: [lens.pyxis3.ai](https://lens.pyxis3.ai)** (gated by Authelia — exec gives shell access to the live cluster, so it requires login).
+
 ## What it does
 
 - **Resource browser** — namespaces, pods, deployments, services, configmaps, secrets metadata, events
