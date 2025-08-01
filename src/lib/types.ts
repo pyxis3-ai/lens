@@ -60,3 +60,16 @@ export interface NginxStats {
 export interface AlertThresholds {
   [key: string]: { warn: number; crit: number }
 }
+
+export interface LLMEndpoint {
+  namespace: string
+  service: string
+  port: number
+  url: string
+  status: 'ok' | 'partial' | 'down'
+  models: string[]
+  latencyMs: number
+  runtime: string
+  servedBy?: string
+  error?: string
+}
