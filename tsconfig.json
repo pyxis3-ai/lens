@@ -6,7 +6,9 @@
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["bun"]
+    "jsx": "preserve",
+    "types": ["bun"],
+    "paths": { "@/*": ["./src/*"] }
   },
-  "include": ["server/**/*.ts"]
+  "include": ["src/**/*.ts", "src/**/*.vue", "server/**/*.ts", "env.d.ts"]
 }
