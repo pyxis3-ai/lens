@@ -16,6 +16,7 @@ function clampInt(val: string | null, fallback: number, min: number, max: number
 
 const server = Bun.serve({
   port: config.port,
+  reusePort: true,
   async fetch(req) {
     const url = new URL(req.url)
 
