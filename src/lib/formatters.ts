@@ -32,11 +32,11 @@ export function formatRate(bps: number): string {
 }
 
 export function podSymbol(status: string, ready: boolean): string {
-  if (status === 'Running' && ready) return '\u25CF'
-  if (status === 'Running') return '\u25D0'
-  if (status === 'Succeeded') return '\u2713'
-  if (status === 'Pending') return '\u25CC'
-  return '\u2715'
+  if (status === 'Running' && ready) return '●'
+  if (status === 'Running') return '◐'
+  if (status === 'Succeeded') return '✓'
+  if (status === 'Pending') return '◌'
+  return '✕'
 }
 
 export function podColor(status: string, ready: boolean): string {

@@ -103,7 +103,7 @@ const tabs: { key: ResourceType; label: string; count: () => number }[] = [
         class="px-1.5 py-0.5 text-xs rounded transition-colors">
         {{ t.label }}<span class="text-zinc-600 ml-0.5">{{ t.count() }}</span>
       </button>
-      <button @click="loadResources" class="text-xs text-zinc-600 hover:text-zinc-400 ml-auto">\u21BB</button>
+      <button @click="loadResources" class="text-xs text-zinc-600 hover:text-zinc-400 ml-auto">↻</button>
     </div>
 
     <!-- Pods -->
@@ -129,15 +129,15 @@ const tabs: { key: ResourceType; label: string; count: () => number }[] = [
               <td class="px-2 py-0.5 text-right text-zinc-600">{{ timeAgo(d.age) }}</td>
               <td class="px-2 py-0.5 text-zinc-600 max-w-48 truncate">{{ d.image }}</td>
               <td class="px-2 py-0.5 text-right" @click.stop>
-                <button @click="scale(d.namespace, d.name)" class="text-zinc-600 hover:text-blue-400 mr-1" title="Scale">\u21D5</button>
-                <button @click="restart(d.namespace, d.name)" class="text-zinc-600 hover:text-amber-400" title="Restart">\u21BB</button>
+                <button @click="scale(d.namespace, d.name)" class="text-zinc-600 hover:text-blue-400 mr-1" title="Scale">⇕</button>
+                <button @click="restart(d.namespace, d.name)" class="text-zinc-600 hover:text-amber-400" title="Restart">↻</button>
               </td>
             </tr>
             <tr v-if="describeKey === `${d.namespace}/${d.name}` && describeData" class="bg-emerald-900/10">
               <td colspan="20" class="p-0">
                 <div class="px-3 py-1 text-xs bg-zinc-900/80 border-b border-zinc-800/50 flex items-center justify-between">
                   <span class="text-emerald-400">describe</span>
-                  <span class="text-zinc-600">esc <button @click.stop="describeData = null; describeKey = ''" class="text-zinc-500 hover:text-zinc-300 ml-1">\u2715</button></span>
+                  <span class="text-zinc-600">esc <button @click.stop="describeData = null; describeKey = ''" class="text-zinc-500 hover:text-zinc-300 ml-1">✕</button></span>
                 </div>
                 <div class="overflow-auto max-h-96 p-2">
                   <pre v-if="describeLoading" class="text-xs text-zinc-600 animate-pulse">loading...</pre>
@@ -171,7 +171,7 @@ const tabs: { key: ResourceType; label: string; count: () => number }[] = [
               <td colspan="20" class="p-0">
                 <div class="px-3 py-1 text-xs bg-zinc-900/80 border-b border-zinc-800/50 flex items-center justify-between">
                   <span class="text-emerald-400">describe</span>
-                  <span class="text-zinc-600">esc <button @click.stop="describeData = null; describeKey = ''" class="text-zinc-500 hover:text-zinc-300 ml-1">\u2715</button></span>
+                  <span class="text-zinc-600">esc <button @click.stop="describeData = null; describeKey = ''" class="text-zinc-500 hover:text-zinc-300 ml-1">✕</button></span>
                 </div>
                 <div class="overflow-auto max-h-96 p-2">
                   <pre v-if="describeLoading" class="text-xs text-zinc-600 animate-pulse">loading...</pre>
@@ -209,7 +209,7 @@ const tabs: { key: ResourceType; label: string; count: () => number }[] = [
               <td colspan="20" class="p-0">
                 <div class="px-3 py-1 text-xs bg-zinc-900/80 border-b border-zinc-800/50 flex items-center justify-between">
                   <span class="text-emerald-400">describe</span>
-                  <span class="text-zinc-600">esc <button @click.stop="describeData = null; describeKey = ''" class="text-zinc-500 hover:text-zinc-300 ml-1">\u2715</button></span>
+                  <span class="text-zinc-600">esc <button @click.stop="describeData = null; describeKey = ''" class="text-zinc-500 hover:text-zinc-300 ml-1">✕</button></span>
                 </div>
                 <div class="overflow-auto max-h-96 p-2">
                   <pre v-if="describeLoading" class="text-xs text-zinc-600 animate-pulse">loading...</pre>
@@ -269,7 +269,7 @@ const tabs: { key: ResourceType; label: string; count: () => number }[] = [
               <td colspan="20" class="p-0">
                 <div class="px-3 py-1 text-xs bg-zinc-900/80 border-b border-zinc-800/50 flex items-center justify-between">
                   <span class="text-emerald-400">describe</span>
-                  <span class="text-zinc-600">esc <button @click.stop="describeData = null; describeKey = ''" class="text-zinc-500 hover:text-zinc-300 ml-1">\u2715</button></span>
+                  <span class="text-zinc-600">esc <button @click.stop="describeData = null; describeKey = ''" class="text-zinc-500 hover:text-zinc-300 ml-1">✕</button></span>
                 </div>
                 <div class="overflow-auto max-h-96 p-2">
                   <pre v-if="describeLoading" class="text-xs text-zinc-600 animate-pulse">loading...</pre>
@@ -301,7 +301,7 @@ const tabs: { key: ResourceType; label: string; count: () => number }[] = [
               <td colspan="20" class="p-0">
                 <div class="px-3 py-1 text-xs bg-zinc-900/80 border-b border-zinc-800/50 flex items-center justify-between">
                   <span class="text-emerald-400">describe</span>
-                  <span class="text-zinc-600">esc <button @click.stop="describeData = null; describeKey = ''" class="text-zinc-500 hover:text-zinc-300 ml-1">\u2715</button></span>
+                  <span class="text-zinc-600">esc <button @click.stop="describeData = null; describeKey = ''" class="text-zinc-500 hover:text-zinc-300 ml-1">✕</button></span>
                 </div>
                 <div class="overflow-auto max-h-96 p-2">
                   <pre v-if="describeLoading" class="text-xs text-zinc-600 animate-pulse">loading...</pre>
@@ -335,7 +335,7 @@ const tabs: { key: ResourceType; label: string; count: () => number }[] = [
               <td colspan="20" class="p-0">
                 <div class="px-3 py-1 text-xs bg-zinc-900/80 border-b border-zinc-800/50 flex items-center justify-between">
                   <span class="text-emerald-400">describe</span>
-                  <span class="text-zinc-600">esc <button @click.stop="describeData = null; describeKey = ''" class="text-zinc-500 hover:text-zinc-300 ml-1">\u2715</button></span>
+                  <span class="text-zinc-600">esc <button @click.stop="describeData = null; describeKey = ''" class="text-zinc-500 hover:text-zinc-300 ml-1">✕</button></span>
                 </div>
                 <div class="overflow-auto max-h-96 p-2">
                   <pre v-if="describeLoading" class="text-xs text-zinc-600 animate-pulse">loading...</pre>
@@ -373,7 +373,7 @@ const tabs: { key: ResourceType; label: string; count: () => number }[] = [
               <td colspan="20" class="p-0">
                 <div class="px-3 py-1 text-xs bg-zinc-900/80 border-b border-zinc-800/50 flex items-center justify-between">
                   <span class="text-emerald-400">describe</span>
-                  <span class="text-zinc-600">esc <button @click.stop="describeData = null; describeKey = ''" class="text-zinc-500 hover:text-zinc-300 ml-1">\u2715</button></span>
+                  <span class="text-zinc-600">esc <button @click.stop="describeData = null; describeKey = ''" class="text-zinc-500 hover:text-zinc-300 ml-1">✕</button></span>
                 </div>
                 <div class="overflow-auto max-h-96 p-2">
                   <pre v-if="describeLoading" class="text-xs text-zinc-600 animate-pulse">loading...</pre>
@@ -403,14 +403,14 @@ const tabs: { key: ResourceType; label: string; count: () => number }[] = [
             <td class="px-2 py-0.5 text-zinc-500">{{ i.class }}</td>
             <td class="px-2 py-0.5 text-zinc-400 max-w-48 truncate">{{ i.hosts.join(', ') }}</td>
             <td class="px-2 py-0.5 text-zinc-500">{{ i.address || '-' }}</td>
-            <td class="px-2 py-0.5" :class="i.tls ? 'text-emerald-400' : 'text-zinc-600'">{{ i.tls ? '\uD83D\uDD12' : '-' }}</td>
+            <td class="px-2 py-0.5" :class="i.tls ? 'text-emerald-400' : 'text-zinc-600'">{{ i.tls ? '🔒' : '-' }}</td>
             <td class="px-2 py-0.5 text-right text-zinc-600">{{ timeAgo(i.age) }}</td>
           </tr>
             <tr v-if="describeKey === `${i.namespace}/${i.name}` && describeData" class="bg-emerald-900/10">
               <td colspan="20" class="p-0">
                 <div class="px-3 py-1 text-xs bg-zinc-900/80 border-b border-zinc-800/50 flex items-center justify-between">
                   <span class="text-emerald-400">describe</span>
-                  <span class="text-zinc-600">esc <button @click.stop="describeData = null; describeKey = ''" class="text-zinc-500 hover:text-zinc-300 ml-1">\u2715</button></span>
+                  <span class="text-zinc-600">esc <button @click.stop="describeData = null; describeKey = ''" class="text-zinc-500 hover:text-zinc-300 ml-1">✕</button></span>
                 </div>
                 <div class="overflow-auto max-h-96 p-2">
                   <pre v-if="describeLoading" class="text-xs text-zinc-600 animate-pulse">loading...</pre>
@@ -447,7 +447,7 @@ const tabs: { key: ResourceType; label: string; count: () => number }[] = [
               <td colspan="20" class="p-0">
                 <div class="px-3 py-1 text-xs bg-zinc-900/80 border-b border-zinc-800/50 flex items-center justify-between">
                   <span class="text-emerald-400">describe</span>
-                  <span class="text-zinc-600">esc <button @click.stop="describeData = null; describeKey = ''" class="text-zinc-500 hover:text-zinc-300 ml-1">\u2715</button></span>
+                  <span class="text-zinc-600">esc <button @click.stop="describeData = null; describeKey = ''" class="text-zinc-500 hover:text-zinc-300 ml-1">✕</button></span>
                 </div>
                 <div class="overflow-auto max-h-96 p-2">
                   <pre v-if="describeLoading" class="text-xs text-zinc-600 animate-pulse">loading...</pre>
@@ -482,7 +482,7 @@ const tabs: { key: ResourceType; label: string; count: () => number }[] = [
               <td colspan="20" class="p-0">
                 <div class="px-3 py-1 text-xs bg-zinc-900/80 border-b border-zinc-800/50 flex items-center justify-between">
                   <span class="text-emerald-400">describe</span>
-                  <span class="text-zinc-600">esc <button @click.stop="describeData = null; describeKey = ''" class="text-zinc-500 hover:text-zinc-300 ml-1">\u2715</button></span>
+                  <span class="text-zinc-600">esc <button @click.stop="describeData = null; describeKey = ''" class="text-zinc-500 hover:text-zinc-300 ml-1">✕</button></span>
                 </div>
                 <div class="overflow-auto max-h-96 p-2">
                   <pre v-if="describeLoading" class="text-xs text-zinc-600 animate-pulse">loading...</pre>

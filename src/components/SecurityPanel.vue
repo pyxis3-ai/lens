@@ -22,7 +22,7 @@ function toggle(name: string) {
       class="bg-zinc-900/50 border border-zinc-800/50 rounded px-3 py-1.5">
       <!-- Jail header (clickable to expand) -->
       <div class="flex items-center gap-3 text-xs cursor-pointer" @click="toggle(String(name))">
-        <span class="text-zinc-500">{{ expandedJail === name ? '\u25BE' : '\u25B8' }}</span>
+        <span class="text-zinc-500">{{ expandedJail === name ? '▾' : '▸' }}</span>
         <span class="text-zinc-400 font-medium">{{ name }}</span>
         <span :class="jail.banned > 0 ? 'text-red-400' : 'text-zinc-600'">{{ jail.banned }} banned</span>
         <span class="text-zinc-600">{{ jail.totalBanned }} total</span>
