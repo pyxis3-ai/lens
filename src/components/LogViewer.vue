@@ -8,7 +8,7 @@ const loading = ref(true)
 const autoScroll = ref(true)
 const searchQuery = ref('')
 const logEl = ref<HTMLElement | null>(null)
-let interval: any = null
+let interval: ReturnType<typeof setInterval> | null = null
 
 async function fetchLogs() {
   try {
