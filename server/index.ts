@@ -152,7 +152,7 @@ const server = Bun.serve({
     }
 
     // --- Static files (SPA) ---
-    const distRoot = resolve('dist')
+    const distRoot = resolve(import.meta.dir, '..', 'dist')
     const requestedPath = resolve(distRoot, '.' + (url.pathname === '/' ? '/index.html' : url.pathname))
     if (!requestedPath.startsWith(distRoot)) return new Response('Forbidden', { status: 403 })
     const file = Bun.file(requestedPath)
