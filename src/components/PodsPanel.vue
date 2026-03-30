@@ -149,7 +149,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
   <div>
     <div class="flex items-center gap-3 mb-1">
       <span class="text-xs text-zinc-500">PODS {{ sorted.length }}</span>
-      <span v-if="pods.length && !pods[0]?.metricsAvailable" class="text-xs text-amber-500">\u26A0 no metrics</span>
+      <span v-if="pods.length && !pods[0]?.metricsAvailable" class="text-xs text-amber-500">⚠ no metrics</span>
       <input v-model="filter" placeholder="/" class="bg-transparent border-b border-zinc-700 text-xs px-1 py-0.5 text-zinc-300 outline-none w-32" />
       <span class="text-zinc-700 text-xs">j/k:nav enter:open x:expand [/]:sub-tab r:refresh</span>
     </div>
@@ -163,7 +163,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
             <th class="text-left px-2 py-1 cursor-pointer hover:text-zinc-400" @click="toggleSort('name')">NAME</th>
             <th class="text-center px-2 py-1">RDY</th>
             <th class="text-left px-2 py-1">STATUS</th>
-            <th class="text-right px-2 py-1 cursor-pointer hover:text-zinc-400" @click="toggleSort('restarts')">\u21BB</th>
+            <th class="text-right px-2 py-1 cursor-pointer hover:text-zinc-400" @click="toggleSort('restarts')">↻</th>
             <th class="text-right px-2 py-1 cursor-pointer hover:text-zinc-400" @click="toggleSort('cpu')">CPU</th>
             <th class="text-right px-2 py-1">%R</th>
             <th class="text-right px-2 py-1 cursor-pointer hover:text-zinc-400" @click="toggleSort('memory')">MEM</th>
@@ -188,7 +188,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
                 {{ pod.name }}
                 <button v-if="pod.containers.length > 1" @click.stop="expandedPod = expandedPod === podKey(pod) ? null : podKey(pod)"
                   class="ml-1 text-zinc-600 hover:text-zinc-400">
-                  {{ expandedPod === podKey(pod) ? '\u25BE' : '\u25B8' }}{{ pod.containers.length }}
+                  {{ expandedPod === podKey(pod) ? '▾' : '▸' }}{{ pod.containers.length }}
                 </button>
               </td>
               <td class="px-2 py-0.5 text-center" :class="pod.readyCount === pod.totalCount ? 'text-emerald-400' : 'text-amber-400'">{{ pod.readyCount }}/{{ pod.totalCount }}</td>
@@ -201,8 +201,8 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
               <td class="px-2 py-0.5 text-zinc-600">{{ pod.ip }}</td>
               <td class="px-2 py-0.5 text-right text-zinc-600">{{ timeAgo(pod.age) }}</td>
               <td v-if="!compact" class="px-2 py-0.5 text-right">
-                <button @click.stop="deletePod(pod)" class="text-zinc-600 hover:text-red-400 mr-1" title="Delete">\u2715</button>
-                <button @click.stop="restartDeploy(pod)" class="text-zinc-600 hover:text-amber-400" title="Restart">\u21BB</button>
+                <button @click.stop="deletePod(pod)" class="text-zinc-600 hover:text-red-400 mr-1" title="Delete">✕</button>
+                <button @click.stop="restartDeploy(pod)" class="text-zinc-600 hover:text-amber-400" title="Restart">↻</button>
               </td>
             </tr>
             <!-- Container expansion -->
@@ -210,11 +210,11 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
               <td :colspan="colCount" class="px-4 py-1">
                 <div class="text-xs space-y-0.5">
                   <div v-for="c in pod.containers" :key="c.name" class="flex items-center gap-3">
-                    <span :class="c.ready ? 'text-emerald-400' : 'text-red-400'">{{ c.ready ? '\u25CF' : '\u25CB' }}</span>
+                    <span :class="c.ready ? 'text-emerald-400' : 'text-red-400'">{{ c.ready ? '●' : '○' }}</span>
                     <span class="text-zinc-400 w-32 truncate">{{ c.name }}</span>
                     <span class="text-zinc-500 w-14 text-right">{{ c.cpu !== null ? `${c.cpu.toFixed(1)}m` : (c.requests.cpu || '-') }}</span>
                     <span class="text-zinc-500 w-16 text-right">{{ c.memory !== null ? formatBytes(c.memory) : (c.requests.memory ? formatBytes(c.requests.memory) : '-') }}</span>
-                    <span class="text-zinc-600 w-6 text-right">\u21BB{{ c.restarts }}</span>
+                    <span class="text-zinc-600 w-6 text-right">↻{{ c.restarts }}</span>
                     <span class="text-zinc-600">{{ c.state }}</span>
                     <span v-if="c.limits.memory" class="text-zinc-700">lim:{{ formatBytes(c.limits.memory) }}</span>
                     <span class="text-zinc-700 truncate">{{ c.image }}</span>
@@ -240,7 +240,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
                     <option v-for="c in containerNames(selectedPod)" :key="c" :value="c">{{ c }}</option>
                   </select>
                   <span class="text-zinc-600 ml-auto text-xs">e:toggle esc</span>
-                  <button @click.stop="selectedPod = null" class="text-zinc-500 hover:text-zinc-300 ml-1">\u2715</button>
+                  <button @click.stop="selectedPod = null" class="text-zinc-500 hover:text-zinc-300 ml-1">✕</button>
                 </div>
                 <div class="overflow-auto max-h-96">
                   <LogViewer v-if="drillMode === 'logs'" :namespace="selectedNs(selectedPod)" :pod="selectedName(selectedPod)" />
