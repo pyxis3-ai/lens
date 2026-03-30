@@ -19,7 +19,7 @@ const sortedHosts = computed(() => {
         <span class="text-zinc-500">AUTHELIA</span>
         <span class="text-zinc-400">requests:{{ autheliaStats.requests }}</span>
         <span :class="autheliaStats.blocked > 0 ? 'text-amber-400' : 'text-zinc-600'">blocked:{{ autheliaStats.blocked }}</span>
-        <button @click="loadAuthelia" class="text-zinc-600 hover:text-zinc-400 ml-auto">\u21BB</button>
+        <button @click="loadAuthelia" class="text-zinc-600 hover:text-zinc-400 ml-auto">↻</button>
       </div>
 
       <!-- Blocked by host -->
