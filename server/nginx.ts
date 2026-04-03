@@ -20,7 +20,6 @@ let _cacheTime = 0
 let _pending: Promise<NginxStats> | null = null
 
 async function doFetch(lines: number): Promise<NginxStats> {
-
     const pods = await k8s.podsByLabel(config.nginxNamespace, config.nginxLabel)
     if (!pods.length) { _cache = emptyStats(); _cacheTime = Date.now(); return _cache }
 
