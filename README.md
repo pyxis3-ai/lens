@@ -60,3 +60,7 @@ Single-developer project, used in my own homelab and reference deployments. Read
 ## Author
 
 [Omar A.](https://github.com/oabdrabo) · AI infrastructure engineer · [LinkedIn](https://linkedin.com/in/oabdrabo)
+
+---
+
+Built by [Omar A.](https://github.com/oabdrabo) · part of the work that informs **[PYXIS3](https://github.com/pyxis3-ai)** — vendor-neutral AI ops platform. Pairs cleanly with [`vllm-bench`](https://github.com/pyxis3-ai/vllm-bench) for benchmarking and observing model-serving fleets on Kubernetes.
