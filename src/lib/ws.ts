@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import type { SystemMetrics, Pod, SecuritySummary, ServiceHealth, NginxStats, Alert, NginxAttack, K8sEvent, Certificate, Node, AlertThresholds } from './types'
+import type { SystemMetrics, Pod, SecuritySummary, ServiceHealth, NginxStats, Alert, NginxAttack, K8sEvent, Certificate, Node, AlertThresholds, LLMEndpoint } from './types'
 
 export const system = ref<SystemMetrics | null>(null)
 export const pods = ref<Pod[]>([])
@@ -30,6 +30,9 @@ export const autheliaStats = ref<{ requests: number; blocked: number; byHost: Re
 export const namespaceFilter = ref<string>('')
 export const nodes = ref<Node[]>([])
 export const alertThresholds = ref<AlertThresholds>({})
+export const llmEndpoints = ref<LLMEndpoint[]>([])
+export const llmLoading = ref(false)
+export const llmError = ref<string | null>(null)
 
 let ws: WebSocket | null = null
 
@@ -120,6 +123,19 @@ export async function loadResources() {
 
 export async function loadThresholds() {
   try { alertThresholds.value = await fetchJson('/api/alerts/thresholds') } catch (e) { console.error('[ws] loadThresholds failed:', e) }
+}
+
+export async function loadLLM(force = false) {
+  llmLoading.value = true
+  llmError.value = null
+  try {
+    llmEndpoints.value = await fetchJson(force ? '/api/llm?force=1' : '/api/llm')
+  } catch (e: any) {
+    llmError.value = e?.message || 'scan failed'
+    console.error('[ws] loadLLM failed:', e)
+  } finally {
+    llmLoading.value = false
+  }
 }
 
 export async function ackAlert(id: string) {

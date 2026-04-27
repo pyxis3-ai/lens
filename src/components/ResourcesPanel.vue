@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { pods, deployments, statefulsets, pvcs, ingresses, k8sServices, daemonsets, replicasets, cronjobs, jobs, configmaps, secrets, loadResources, namespaceFilter } from '../lib/ws'
+import { pods, deployments, statefulsets, pvcs, ingresses, k8sServices, daemonsets, replicasets, cronjobs, jobs, configmaps, secrets, loadResources, namespaceFilter, llmEndpoints } from '../lib/ws'
 import { timeAgo } from '../lib/formatters'
 import PodsPanel from './PodsPanel.vue'
+import LLMPanel from './LLMPanel.vue'
 
-type ResourceType = 'pods' | 'deploy' | 'sts' | 'ds' | 'rs' | 'svc' | 'cm' | 'sec' | 'pvc' | 'ing' | 'cj' | 'job'
+type ResourceType = 'llm' | 'pods' | 'deploy' | 'sts' | 'ds' | 'rs' | 'svc' | 'cm' | 'sec' | 'pvc' | 'ing' | 'cj' | 'job'
 const active = ref<ResourceType>('pods')
 const describeData = ref<any>(null)
 const describeKey = ref('')
@@ -62,7 +63,7 @@ const filtered = computed(() => ({
   job: nsFilter(jobs.value),
 }))
 
-const RESOURCE_TYPES: ResourceType[] = ['pods', 'deploy', 'sts', 'ds', 'rs', 'svc', 'cm', 'sec', 'pvc', 'ing', 'cj', 'job']
+const RESOURCE_TYPES: ResourceType[] = ['llm', 'pods', 'deploy', 'sts', 'ds', 'rs', 'svc', 'cm', 'sec', 'pvc', 'ing', 'cj', 'job']
 
 function cycleTab(dir: number) {
   const idx = RESOURCE_TYPES.indexOf(active.value)
@@ -79,6 +80,7 @@ function selectPodByKey(key: string) { podsRef.value?.selectByKey?.(key) }
 defineExpose({ cycleTab, isPodsActive, selectPodByKey })
 
 const tabs: { key: ResourceType; label: string; count: () => number }[] = [
+  { key: 'llm', label: 'llm', count: () => llmEndpoints.value.length },
   { key: 'pods', label: 'pods', count: () => pods.value.length },
   { key: 'deploy', label: 'deploy', count: () => filtered.value.deploy.length },
   { key: 'sts', label: 'sts', count: () => filtered.value.sts.length },
@@ -106,8 +108,11 @@ const tabs: { key: ResourceType; label: string; count: () => number }[] = [
       <button @click="loadResources" class="text-xs text-zinc-600 hover:text-zinc-400 ml-auto">↻</button>
     </div>
 
+    <!-- LLM/inference endpoints -->
+    <LLMPanel v-if="active === 'llm'" />
+
     <!-- Pods -->
-    <PodsPanel v-if="active === 'pods'" ref="podsRef" :pods="pods" :focusedIndex="focusedPodIndex" />
+    <PodsPanel v-else-if="active === 'pods'" ref="podsRef" :pods="pods" :focusedIndex="focusedPodIndex" />
 
     <!-- Deployments -->
     <div v-else-if="active === 'deploy'" class="overflow-x-auto">

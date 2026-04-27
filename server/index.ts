@@ -8,6 +8,7 @@ import { nginx } from './nginx'
 import { store } from './db'
 import { addClient, removeClient, getActiveAlerts, getAlertHistory, acknowledgeAlert, dismissAlert, getThresholds, updateThreshold } from './monitoring'
 import { startExec, execMessage, stopExec } from './exec'
+import { llm } from './llm'
 
 function clampInt(val: string | null, fallback: number, min: number, max: number): number {
   const n = parseInt(val || String(fallback))
@@ -85,6 +86,10 @@ const server = Bun.serve({
     if (url.pathname === '/api/jobs') return Response.json(await k8s.jobs())
     if (url.pathname === '/api/configmaps') return Response.json(await k8s.configmaps())
     if (url.pathname === '/api/secrets') return Response.json(await k8s.secrets())
+    if (url.pathname === '/api/llm') {
+      const force = url.searchParams.get('force') === '1'
+      return Response.json(await llm.endpoints(force))
+    }
     if (url.pathname === '/api/describe') {
       const kind = url.searchParams.get('kind') || ''
       const ns = url.searchParams.get('namespace') || ''

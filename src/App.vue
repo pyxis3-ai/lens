@@ -2,7 +2,7 @@
 import { onMounted, onUnmounted, ref, computed, watch } from 'vue'
 import {
   connect, system, pods, security, services, nginxStats, activeAlerts, connected,
-  loadAttacks, loadEvents, loadResources, loadThresholds,
+  loadAttacks, loadEvents, loadResources, loadThresholds, loadLLM,
   namespaceFilter,
 } from './lib/ws'
 import SystemPanel from './components/SystemPanel.vue'
@@ -115,11 +115,12 @@ onMounted(() => {
   connect()
   loadResources()
   loadThresholds()
+  loadLLM()
   document.addEventListener('keydown', onKeydown)
   refreshInterval = setInterval(() => {
     if (selectedSection.value === 'security') loadAttacks()
     if (selectedSection.value === 'events') loadEvents()
-    if (selectedSection.value === 'resources') loadResources()
+    if (selectedSection.value === 'resources') { loadResources(); loadLLM() }
   }, 30000)
 })
 
