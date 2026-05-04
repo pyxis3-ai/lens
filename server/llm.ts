@@ -106,23 +106,34 @@ async function listServiceCandidates(): Promise<PortCandidate[]> {
 }
 
 function detectRuntime(modelsJson: any, headers: Headers, image?: string): string {
-  // Server header / image name first — most reliable
+  // 1) Authoritative: data[0].owned_by reports the runtime by name
+  const ownedBy = String(modelsJson?.data?.[0]?.owned_by ?? '').toLowerCase()
+  if (ownedBy === 'vllm') return 'vllm'
+  if (ownedBy === 'llamacpp' || ownedBy === 'llama.cpp') return 'llama.cpp'
+  if (ownedBy === 'tgi' || ownedBy === 'huggingface') return 'tgi'
+  if (ownedBy === 'ollama') return 'ollama'
+  if (ownedBy === 'sglang') return 'sglang'
+
+  // 2) Server header
   const server = headers.get('server') || ''
   if (/vllm/i.test(server)) return 'vllm'
   if (/text-generation-inference/i.test(server) || /TGI/.test(server)) return 'tgi'
   if (/ollama/i.test(server)) return 'ollama'
+  if (/llama[. _-]?cpp/i.test(server) || /llama-server/i.test(server)) return 'llama.cpp'
+
+  // 3) Container image hint (llama-server is what llama.cpp's HTTP server is called)
   if (image) {
     if (/vllm/i.test(image)) return 'vllm'
     if (/text-generation-inference|tgi/i.test(image)) return 'tgi'
-    if (/llama[._-]?cpp/i.test(image)) return 'llama.cpp'
+    if (/llama[._ -]?cpp/i.test(image) || /llama-?server/i.test(image)) return 'llama.cpp'
     if (/ollama/i.test(image)) return 'ollama'
     if (/sglang/i.test(image)) return 'sglang'
     if (/triton/i.test(image)) return 'triton'
     if (/infinity/i.test(image)) return 'infinity'
   }
-  // Runtime-specific JSON shapes
-  if (modelsJson?.data?.[0]?.owned_by === 'vllm') return 'vllm'
-  if (Array.isArray(modelsJson?.models)) return 'ollama'  // Ollama uses /api/tags shape, but if accessed via /v1/models it'd be empty
+
+  // 4) Last-resort JSON shape heuristic
+  if (Array.isArray(modelsJson?.models) && !Array.isArray(modelsJson?.data)) return 'ollama'
   return 'openai-compat'
 }
 
