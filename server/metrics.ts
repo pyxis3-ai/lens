@@ -1,4 +1,3 @@
-import { readFile } from 'fs/promises'
 import { statfsSync } from 'fs'
 import { config } from './config'
 
@@ -15,7 +14,7 @@ export interface SystemMetrics {
 const PROC = config.hostProc
 
 async function readProc(path: string): Promise<string> {
-  try { return await readFile(path, 'utf-8') } catch { return '' }
+  try { return await Bun.file(path).text() } catch { return '' }
 }
 
 // CPU usage tracking (need two samples to calculate)

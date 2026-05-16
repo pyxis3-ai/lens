@@ -1,4 +1,3 @@
-import { readFile } from 'fs/promises'
 import { k8s } from './k8s'
 import { config } from './config'
 
@@ -13,7 +12,7 @@ export const security = {
   async fail2ban() {
     let lines: string[] = []
     try {
-      const content = await readFile(config.f2bLog, 'utf-8')
+      const content = await Bun.file(config.f2bLog).text()
       lines = content.split('\n').filter(Boolean).slice(-2000)
     } catch (e) {
       console.error('[security] Failed to read fail2ban log:', (e as Error).message)
@@ -50,7 +49,7 @@ export const security = {
 
   async sshAttacks() {
     try {
-      const content = await readFile(config.authLog, 'utf-8')
+      const content = await Bun.file(config.authLog).text()
       const lines = content.split('\n').slice(-3000)
 
       const attacks: { time: string; ip: string; user: string; type: string }[] = []

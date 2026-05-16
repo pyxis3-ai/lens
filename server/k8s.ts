@@ -1,4 +1,3 @@
-import { readFile } from 'fs/promises'
 import { config } from './config'
 
 const API = config.k8sApi
@@ -10,7 +9,7 @@ let _tokenTime = 0
 export async function k8sGetToken(): Promise<string> {
   if (_token && Date.now() - _tokenTime < config.tokenCacheTTL) return _token
   try {
-    _token = (await readFile(TOKEN_PATH, 'utf-8')).trim()
+    _token = (await Bun.file(TOKEN_PATH).text()).trim()
     _tokenTime = Date.now()
   } catch (e) {
     console.error('[k8s] Failed to read SA token:', (e as Error).message)
