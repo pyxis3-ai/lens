@@ -1,0 +1,11 @@
+{
+  "project": "Lens",
+  "environment": "local",
+  "logLevel": "info",
+  "features": {
+    "documentationChecks": true,
+    "releaseNotes": true,
+    "smokeValidation": true
+  },
+  "notes": "Example configuration for local validation and documentation."
+}
