@@ -67,3 +67,7 @@ Part of [PYXIS3](https://pyxis3.ai) — model-agnostic LLM serving infrastructur
 ## Status
 
 Single-developer project, used in production on the PYXIS3 homelab cluster. Read-only by default; exec is gated behind RBAC.
+
+## Maintenance
+
+This repository is maintained with small, reviewable updates. Supporting documentation lives in `docs/`, example inputs live in `examples/`, and lightweight validation notes live in `tests/smoke/`.
