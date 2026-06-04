@@ -2,7 +2,7 @@
 
 **Lightweight in-cluster observability for LLM and AI/ML serving on Kubernetes.** Read-only views over your serving cluster's resources, GPU pressure visibility, and an in-browser `kubectl exec` terminal — all served from a single Bun process running inside the cluster.
 
-Built for the operational pattern Pyxis3 uses to run model-agnostic LLM serving infrastructure: open-source inference runtimes (vLLM, TGI, llama.cpp, Ollama) on Kubernetes, where you need a fast way to inspect inference pods, tail accelerator-bound workloads, and exec into a model server without leaving the browser.
+Built for the operational pattern of running open-source LLM inference on Kubernetes: open-source inference runtimes (vLLM, TGI, llama.cpp, Ollama), where you need a fast way to inspect inference pods, tail accelerator-bound workloads, and exec into a model server without leaving the browser.
 
 **Demo: [lens.pyxis3.ai](https://lens.pyxis3.ai)** — gated by Authelia one-factor auth (exec gives shell access to the live cluster, so login is required).
 
@@ -62,7 +62,7 @@ docker build -t lens:dev .
 
 ## Where it fits
 
-Part of [PYXIS3](https://pyxis3.ai) — model-agnostic LLM serving infrastructure. lens is the observability layer for an LLM-serving Kubernetes cluster running vLLM / TGI / llama.cpp / Ollama side by side.
+Open-source AI-/LLM-infrastructure tooling published by [PYXIS3](https://pyxis3.ai). lens is an observability layer for an LLM-serving Kubernetes cluster running vLLM / TGI / llama.cpp / Ollama side by side.
 
 ## Status
 
