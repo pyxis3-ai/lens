@@ -8,7 +8,7 @@ Built for the operational pattern of running open-source LLM inference on Kubern
 
 ## What it does
 
-- **LLM / inference endpoint discovery** — scans every cluster `Service` on its declared TCP ports for an OpenAI-compatible `/v1/models` response. Auto-detects vLLM, TGI, llama.cpp, Ollama, sglang, Triton — reports model list, probe latency, and inferred runtime, refreshed every 30s. No outbound traffic, no tokens spent. *This is the headline view for a model-agnostic serving cluster.*
+- **LLM / inference endpoint discovery** — scans every cluster `Service` on its declared TCP ports for an OpenAI-compatible `/v1/models` response. Auto-detects vLLM, TGI, llama.cpp, Ollama, sglang, Triton — reports model list, probe latency, and inferred runtime, refreshed every 30s. No outbound traffic, no tokens spent. *This is the headline view for an LLM-serving cluster.*
 - **Pod & workload browser** — namespaces, pods, deployments, services, configmaps, events. Built to surface the inference layer (vLLM/TGI/llama.cpp pods, KEDA scalers, ResourceQuotas per tenant).
 - **In-browser `kubectl exec`** — open a real shell on any pod via `xterm.js` over WebSocket. Critical for AI/ML serving where you need to inspect model weights, tokenizer state, or attach to a running vLLM process.
 - **Resource pressure** — per-namespace CPU/memory pressure, surfaced for multi-tenant serving where one heavy inference workload can starve neighbours.
