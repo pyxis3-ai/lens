@@ -54,7 +54,7 @@ function connect() {
     fitAddon!.fit()
 
     resizeObserver = new ResizeObserver(() => {
-      try { fitAddon?.fit() } catch { /* resize may fail during teardown */ }
+      try { fitAddon?.fit() } catch {}
     })
     resizeObserver.observe(termEl.value)
 

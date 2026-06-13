@@ -28,7 +28,6 @@ export const health = {
           const res = await fetch(url, {
             redirect: 'manual',
             signal: AbortSignal.timeout(config.healthTimeout),
-
             tls: { rejectUnauthorized: false },
           })
           const latency = Math.round(performance.now() - start)

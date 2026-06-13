@@ -1,5 +1,5 @@
-
 import { k8sGet } from './k8s'
+import type { LLMEndpoint } from '../src/lib/types'
 
 const DEFAULT_PORTS = [8000, 3000, 8080, 5000, 11434, 8888, 8081, 4000]
 
@@ -10,19 +10,6 @@ const INFERENCE_IMAGE_HINTS = [
   /ollama/i, /sglang/i, /triton/i, /lorax/i, /huggingface/i, /infinity/i,
   /openai/i, /mistral/i, /llm/i, /inference/i, /embed/i,
 ]
-
-export interface LLMEndpoint {
-  namespace: string
-  service: string
-  port: number
-  url: string
-  status: 'ok' | 'partial' | 'down'
-  models: string[]
-  latencyMs: number
-  runtime: string
-  servedBy?: string
-  error?: string
-}
 
 interface PortCandidate {
   namespace: string

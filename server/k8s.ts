@@ -25,7 +25,6 @@ export async function k8sGet(path: string): Promise<any> {
   try {
     const res = await fetch(`${API}${path}`, {
       headers: { Authorization: `Bearer ${t}` },
-
       tls: { rejectUnauthorized: false },
     })
     if (!res.ok) {
@@ -47,7 +46,6 @@ async function k8sWrite(method: string, path: string, body?: any): Promise<{ ok:
       method,
       headers: { Authorization: `Bearer ${t}`, 'Content-Type': method === 'PATCH' ? 'application/strategic-merge-patch+json' : 'application/json' },
       body: body ? JSON.stringify(body) : undefined,
-
       tls: { rejectUnauthorized: false },
     })
     const data = await res.json().catch(() => ({}))
@@ -155,14 +153,10 @@ export const k8s = {
     })
   },
 
-  async podLogs(namespace: string, pod: string, container?: string | number, tail = 200) {
+  async podLogs(namespace: string, pod: string, container?: string, tail = 200) {
     const t = await k8sGetToken()
     if (!t || !namespace || !pod) return []
 
-    if (typeof container === 'number') {
-      tail = container
-      container = undefined
-    }
     const base = `${API}/api/v1/namespaces/${encodeURIComponent(namespace)}/pods/${encodeURIComponent(pod)}/log?tailLines=${tail}`
     const fetchLog = async (cname: string) => {
       const res = await fetch(`${base}&container=${encodeURIComponent(cname)}`, { headers: { Authorization: `Bearer ${t}` }, tls: { rejectUnauthorized: false } as any })

@@ -5,7 +5,7 @@ import { security } from './security'
 import { health } from './health'
 import { nginx } from './nginx'
 import { store } from './db'
-import type { SystemMetrics } from './metrics'
+import type { SystemMetrics, Alert } from '../src/lib/types'
 
 const WS_CLIENTS = new Set<any>()
 
@@ -40,15 +40,6 @@ export function updateThreshold(id: string, warn: number, crit: number): { ok: b
   thresholds[id] = { warn, crit }
   store.saveThreshold(id, warn, crit)
   return { ok: true }
-}
-
-interface Alert {
-  id: string
-  level: 'warning' | 'critical'
-  message: string
-  ts: number
-  resolved: boolean
-  acknowledged: boolean
 }
 
 const activeAlerts = new Map<string, Alert>()
