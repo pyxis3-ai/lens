@@ -15,151 +15,131 @@ function clampInt(val: string | null, fallback: number, min: number, max: number
   return isNaN(n) ? fallback : Math.max(min, Math.min(max, n))
 }
 
+// Argument-free GET endpoints: path → producer (value or promise). Everything that needs query params,
+// headers, or a request body is handled explicitly below.
+const GET_ROUTES: Record<string, () => unknown> = {
+  '/api/health': () => ({ status: 'ok' }),
+  '/api/system': () => metrics.system(),
+  '/api/pods': () => k8s.pods(),
+  '/api/namespaces': () => k8s.namespaces(),
+  '/api/nodes': () => k8s.nodes(),
+  '/api/pvcs': () => k8s.pvcs(),
+  '/api/deployments': () => k8s.deployments(),
+  '/api/statefulsets': () => k8s.statefulsets(),
+  '/api/ingresses': () => k8s.ingresses(),
+  '/api/services': () => k8s.services(),
+  '/api/daemonsets': () => k8s.daemonsets(),
+  '/api/replicasets': () => k8s.replicasets(),
+  '/api/cronjobs': () => k8s.cronjobs(),
+  '/api/jobs': () => k8s.jobs(),
+  '/api/configmaps': () => k8s.configmaps(),
+  '/api/secrets': () => k8s.secrets(),
+  '/api/certificates': () => k8s.certificates(),
+  '/api/security': () => security.summary(),
+  '/api/security/fail2ban': () => security.fail2ban(),
+  '/api/security/ssh': () => security.sshAttacks(),
+  '/api/security/authelia': () => security.authelia(),
+  '/api/security/attacks': () => store.getAttacks(200),
+  '/api/security/stats': () => store.getAttackStats(),
+  '/api/health/services': () => health.check(),
+  '/api/alerts': () => getActiveAlerts(),
+  '/api/alerts/history': () => getAlertHistory(50),
+  '/api/alerts/thresholds': () => getThresholds(),
+}
+
 const server = Bun.serve({
   port: config.port,
   reusePort: true,
   async fetch(req) {
     const url = new URL(req.url)
+    const path = url.pathname
+    const q = url.searchParams
 
     // WebSocket upgrades
-    if (url.pathname === '/ws') {
+    if (path === '/ws') {
       if ((server.upgrade as any)(req, { data: { type: 'broadcast' } })) return
       return new Response('WebSocket upgrade failed', { status: 400 })
     }
-    if (url.pathname === '/ws/exec') {
-      const namespace = url.searchParams.get('namespace') || ''
-      const pod = url.searchParams.get('pod') || ''
-      const container = url.searchParams.get('container') || ''
+    if (path === '/ws/exec') {
+      const namespace = q.get('namespace') || '', pod = q.get('pod') || '', container = q.get('container') || ''
       if (!namespace || !pod || !container) return new Response('namespace, pod, and container required', { status: 400 })
       if ((server.upgrade as any)(req, { data: { type: 'exec', namespace, pod, container } })) return
       return new Response('WebSocket upgrade failed', { status: 400 })
     }
 
     // Auth check for non-health endpoints
-    if (config.apiSecret && url.pathname !== '/api/health') {
-      const auth = req.headers.get('x-api-secret') || req.headers.get('authorization')?.replace('Bearer ', '');
-      if (auth !== config.apiSecret) return new Response('Unauthorized', { status: 401 });
+    if (config.apiSecret && path !== '/api/health') {
+      const auth = req.headers.get('x-api-secret') || req.headers.get('authorization')?.replace('Bearer ', '')
+      if (auth !== config.apiSecret) return new Response('Unauthorized', { status: 401 })
     }
 
-    // --- GET endpoints ---
-    if (url.pathname === '/api/user') {
-      const name = req.headers.get('Remote-Name') || req.headers.get('Remote-User') || ''
-      const email = req.headers.get('Remote-Email') || ''
-      return Response.json({ name, email, initial: name.charAt(0).toUpperCase() || '?' })
-    }
-    if (url.pathname === '/api/health') return Response.json({ status: 'ok' })
-    if (url.pathname === '/api/system') return Response.json(await metrics.system())
-    if (url.pathname === '/api/pods') return Response.json(await k8s.pods())
-    if (url.pathname === '/api/namespaces') return Response.json(await k8s.namespaces())
-    if (url.pathname === '/api/logs') {
-      const ns = url.searchParams.get('namespace') || ''
-      const pod = url.searchParams.get('pod') || ''
-      const container = url.searchParams.get('container') || undefined
-      const tail = clampInt(url.searchParams.get('tail'), 200, 1, 5000)
-      if (!ns || !pod) return Response.json({ lines: [], error: 'namespace and pod required' })
-      const lines = await k8s.podLogs(ns, pod, container, tail)
-      return Response.json({ namespace: ns, pod, lines })
-    }
-    if (url.pathname === '/api/events') return Response.json(await k8s.events(clampInt(url.searchParams.get('limit'), 50, 1, 200)))
-    if (url.pathname === '/api/security') return Response.json(await security.summary())
-    if (url.pathname === '/api/security/fail2ban') return Response.json(await security.fail2ban())
-    if (url.pathname === '/api/security/nginx') return Response.json(await security.nginxAttacks(clampInt(url.searchParams.get('lines'), 50, 1, 500)))
-    if (url.pathname === '/api/security/ssh') return Response.json(await security.sshAttacks())
-    if (url.pathname === '/api/security/authelia') return Response.json(await security.authelia())
-    if (url.pathname === '/api/security/attacks') return Response.json(store.getAttacks(200))
-    if (url.pathname === '/api/security/stats') return Response.json(store.getAttackStats())
-    if (url.pathname === '/api/health/services') return Response.json(await health.check())
-    if (url.pathname === '/api/certificates') return Response.json(await k8s.certificates())
-    if (url.pathname === '/api/nginx') return Response.json(await nginx.analyze(clampInt(url.searchParams.get('lines'), 300, 1, 1000)))
-    if (url.pathname === '/api/alerts') return Response.json(getActiveAlerts())
-    if (url.pathname === '/api/alerts/history') return Response.json(getAlertHistory(50))
-    if (url.pathname === '/api/alerts/thresholds') return Response.json(getThresholds())
-    if (url.pathname === '/api/nodes') return Response.json(await k8s.nodes())
-    if (url.pathname === '/api/pvcs') return Response.json(await k8s.pvcs())
-    if (url.pathname === '/api/deployments') return Response.json(await k8s.deployments())
-    if (url.pathname === '/api/statefulsets') return Response.json(await k8s.statefulsets())
-    if (url.pathname === '/api/ingresses') return Response.json(await k8s.ingresses())
-    if (url.pathname === '/api/services') return Response.json(await k8s.services())
-    if (url.pathname === '/api/daemonsets') return Response.json(await k8s.daemonsets())
-    if (url.pathname === '/api/replicasets') return Response.json(await k8s.replicasets())
-    if (url.pathname === '/api/cronjobs') return Response.json(await k8s.cronjobs())
-    if (url.pathname === '/api/jobs') return Response.json(await k8s.jobs())
-    if (url.pathname === '/api/configmaps') return Response.json(await k8s.configmaps())
-    if (url.pathname === '/api/secrets') return Response.json(await k8s.secrets())
-    if (url.pathname === '/api/llm') {
-      const force = url.searchParams.get('force') === '1'
-      return Response.json(await llm.endpoints(force))
-    }
-    if (url.pathname === '/api/describe') {
-      const kind = url.searchParams.get('kind') || ''
-      const ns = url.searchParams.get('namespace') || ''
-      const name = url.searchParams.get('name') || ''
-      const ens = encodeURIComponent(ns)
-      const ename = encodeURIComponent(name)
-      const paths: Record<string, string> = {
-        pod: `/api/v1/namespaces/${ens}/pods/${ename}`,
-        deployment: `/apis/apps/v1/namespaces/${ens}/deployments/${ename}`,
-        statefulset: `/apis/apps/v1/namespaces/${ens}/statefulsets/${ename}`,
-        daemonset: `/apis/apps/v1/namespaces/${ens}/daemonsets/${ename}`,
-        service: `/api/v1/namespaces/${ens}/services/${ename}`,
-        configmap: `/api/v1/namespaces/${ens}/configmaps/${ename}`,
-        secret: `/api/v1/namespaces/${ens}/secrets/${ename}`,
-        pvc: `/api/v1/namespaces/${ens}/persistentvolumeclaims/${ename}`,
-        ingress: `/apis/networking.k8s.io/v1/namespaces/${ens}/ingresses/${ename}`,
-        cronjob: `/apis/batch/v1/namespaces/${ens}/cronjobs/${ename}`,
-        job: `/apis/batch/v1/namespaces/${ens}/jobs/${ename}`,
+    if (req.method === 'GET') {
+      // Argument-bearing GET endpoints
+      if (path === '/api/user') {
+        const name = req.headers.get('Remote-Name') || req.headers.get('Remote-User') || ''
+        return Response.json({ name, email: req.headers.get('Remote-Email') || '', initial: name.charAt(0).toUpperCase() || '?' })
       }
-      const path = paths[kind]
-      if (!path) return Response.json({ error: 'unknown kind' }, { status: 400 })
-      return Response.json(await k8sGet(path))
+      if (path === '/api/logs') {
+        const ns = q.get('namespace') || '', pod = q.get('pod') || ''
+        if (!ns || !pod) return Response.json({ lines: [], error: 'namespace and pod required' })
+        const lines = await k8s.podLogs(ns, pod, q.get('container') || undefined, clampInt(q.get('tail'), 200, 1, 5000))
+        return Response.json({ namespace: ns, pod, lines })
+      }
+      if (path === '/api/events') return Response.json(await k8s.events(clampInt(q.get('limit'), 50, 1, 200)))
+      if (path === '/api/security/nginx') return Response.json(await security.nginxAttacks(clampInt(q.get('lines'), 50, 1, 500)))
+      if (path === '/api/nginx') return Response.json(await nginx.analyze(clampInt(q.get('lines'), 300, 1, 1000)))
+      if (path === '/api/llm') return Response.json(await llm.endpoints(q.get('force') === '1'))
+      if (path === '/api/describe') {
+        const ens = encodeURIComponent(q.get('namespace') || ''), ename = encodeURIComponent(q.get('name') || '')
+        const paths: Record<string, string> = {
+          pod: `/api/v1/namespaces/${ens}/pods/${ename}`,
+          deployment: `/apis/apps/v1/namespaces/${ens}/deployments/${ename}`,
+          statefulset: `/apis/apps/v1/namespaces/${ens}/statefulsets/${ename}`,
+          daemonset: `/apis/apps/v1/namespaces/${ens}/daemonsets/${ename}`,
+          service: `/api/v1/namespaces/${ens}/services/${ename}`,
+          configmap: `/api/v1/namespaces/${ens}/configmaps/${ename}`,
+          secret: `/api/v1/namespaces/${ens}/secrets/${ename}`,
+          pvc: `/api/v1/namespaces/${ens}/persistentvolumeclaims/${ename}`,
+          ingress: `/apis/networking.k8s.io/v1/namespaces/${ens}/ingresses/${ename}`,
+          cronjob: `/apis/batch/v1/namespaces/${ens}/cronjobs/${ename}`,
+          job: `/apis/batch/v1/namespaces/${ens}/jobs/${ename}`,
+        }
+        const p = paths[q.get('kind') || '']
+        return p ? Response.json(await k8sGet(p)) : Response.json({ error: 'unknown kind' }, { status: 400 })
+      }
+      // Argument-free GET endpoints
+      const producer = GET_ROUTES[path]
+      if (producer) return Response.json(await producer())
     }
 
-    // --- POST endpoints ---
     if (req.method === 'POST') {
-      if (url.pathname === '/api/pod/delete') {
-        let body; try { body = await req.json() } catch { return Response.json({ ok: false, error: 'Invalid JSON' }, { status: 400 }) }
-        const { namespace, name } = body
-        if (typeof namespace !== 'string' || typeof name !== 'string' || !namespace || !name) return Response.json({ ok: false, error: 'invalid params' }, { status: 400 })
-        return Response.json(await k8s.deletePod(namespace, name))
-      }
-      if (url.pathname === '/api/deployment/restart') {
-        let body; try { body = await req.json() } catch { return Response.json({ ok: false, error: 'Invalid JSON' }, { status: 400 }) }
-        const { namespace, name } = body
-        if (typeof namespace !== 'string' || typeof name !== 'string' || !namespace || !name) return Response.json({ ok: false, error: 'invalid params' }, { status: 400 })
-        return Response.json(await k8s.restartDeployment(namespace, name))
-      }
-      if (url.pathname === '/api/deployment/scale') {
-        let body; try { body = await req.json() } catch { return Response.json({ ok: false, error: 'Invalid JSON' }, { status: 400 }) }
-        const { namespace, name, replicas } = body
-        if (typeof namespace !== 'string' || typeof name !== 'string' || !namespace || !name) return Response.json({ ok: false, error: 'invalid params' }, { status: 400 })
-        const r = parseInt(replicas)
-        if (isNaN(r) || r < 0 || r > config.maxReplicas) return Response.json({ ok: false, error: `replicas must be 0-${config.maxReplicas}` }, { status: 400 })
+      let body: any
+      try { body = await req.json() } catch { return Response.json({ ok: false, error: 'Invalid JSON' }, { status: 400 }) }
+      const { namespace, name, id } = body
+      const hasNsName = typeof namespace === 'string' && !!namespace && typeof name === 'string' && !!name
+      const bad = (error = 'invalid params') => Response.json({ ok: false, error }, { status: 400 })
+      const hasId = typeof id === 'string' && !!id
+
+      if (path === '/api/pod/delete') return hasNsName ? Response.json(await k8s.deletePod(namespace, name)) : bad()
+      if (path === '/api/deployment/restart') return hasNsName ? Response.json(await k8s.restartDeployment(namespace, name)) : bad()
+      if (path === '/api/deployment/scale') {
+        if (!hasNsName) return bad()
+        const r = parseInt(body.replicas)
+        if (isNaN(r) || r < 0 || r > config.maxReplicas) return bad(`replicas must be 0-${config.maxReplicas}`)
         return Response.json(await k8s.scaleDeployment(namespace, name, r))
       }
-      if (url.pathname === '/api/alerts/ack') {
-        let body; try { body = await req.json() } catch { return Response.json({ ok: false, error: 'Invalid JSON' }, { status: 400 }) }
-        const { id } = body
-        if (typeof id !== 'string' || !id) return Response.json({ ok: false }, { status: 400 })
-        return Response.json(acknowledgeAlert(id))
-      }
-      if (url.pathname === '/api/alerts/dismiss') {
-        let body; try { body = await req.json() } catch { return Response.json({ ok: false, error: 'Invalid JSON' }, { status: 400 }) }
-        const { id } = body
-        if (typeof id !== 'string' || !id) return Response.json({ ok: false }, { status: 400 })
-        return Response.json(dismissAlert(id))
-      }
-      if (url.pathname === '/api/alerts/thresholds') {
-        let body; try { body = await req.json() } catch { return Response.json({ ok: false, error: 'Invalid JSON' }, { status: 400 }) }
-        if (typeof body.id !== 'string' || !body.id) return Response.json({ ok: false }, { status: 400 })
-        const warn = Math.max(0, Math.min(100, parseFloat(body.warn) || 0))
-        const crit = Math.max(0, Math.min(100, parseFloat(body.crit) || 0))
-        return Response.json(updateThreshold(body.id, warn, crit))
+      if (path === '/api/alerts/ack') return hasId ? Response.json(acknowledgeAlert(id)) : Response.json({ ok: false }, { status: 400 })
+      if (path === '/api/alerts/dismiss') return hasId ? Response.json(dismissAlert(id)) : Response.json({ ok: false }, { status: 400 })
+      if (path === '/api/alerts/thresholds') {
+        if (!hasId) return Response.json({ ok: false }, { status: 400 })
+        const clamp = (v: any) => Math.max(0, Math.min(100, parseFloat(v) || 0))
+        return Response.json(updateThreshold(id, clamp(body.warn), clamp(body.crit)))
       }
     }
 
     // --- Static files (SPA) ---
     const distRoot = resolve(import.meta.dir, '..', 'dist')
-    const requestedPath = resolve(distRoot, '.' + (url.pathname === '/' ? '/index.html' : url.pathname))
+    const requestedPath = resolve(distRoot, '.' + (path === '/' ? '/index.html' : path))
     if (!requestedPath.startsWith(distRoot)) return new Response('Forbidden', { status: 403 })
     const file = Bun.file(requestedPath)
     if (await file.exists()) return new Response(file)

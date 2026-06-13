@@ -73,6 +73,9 @@ function parseMem(v: string): number {
   return parseInt(v)
 }
 
+// GET a collection and shape each item; [] on any failure. Most read methods are exactly this.
+const list = async (path: string, shape: (item: any) => any): Promise<any[]> => ((await k8sGet(path))?.items || []).map(shape)
+
 export const k8s = {
   // --- Read operations ---
 
@@ -186,14 +189,12 @@ export const k8s = {
     return logs
   },
 
-  async podsByLabel(namespace: string, label: string): Promise<string[]> {
-    const data = await k8sGet(`/api/v1/namespaces/${encodeURIComponent(namespace)}/pods?labelSelector=${encodeURIComponent(label)}`)
-    return data?.items?.map((p: any) => p.metadata.name) || []
+  podsByLabel(namespace: string, label: string): Promise<string[]> {
+    return list(`/api/v1/namespaces/${encodeURIComponent(namespace)}/pods?labelSelector=${encodeURIComponent(label)}`, (p: any) => p.metadata.name)
   },
 
-  async namespaces() {
-    const data = await k8sGet('/api/v1/namespaces')
-    return data?.items?.map((n: any) => ({ name: n.metadata.name, status: n.status.phase, age: n.metadata.creationTimestamp })) || []
+  namespaces() {
+    return list('/api/v1/namespaces', (n: any) => ({ name: n.metadata.name, status: n.status.phase, age: n.metadata.creationTimestamp }))
   },
 
   async nodes() {
@@ -260,18 +261,16 @@ export const k8s = {
       }))
   },
 
-  async certificates() {
-    const data = await k8sGet('/apis/cert-manager.io/v1/certificates')
-    return data?.items?.map((c: any) => ({
+  certificates() {
+    return list('/apis/cert-manager.io/v1/certificates', (c: any) => ({
       name: c.metadata.name, namespace: c.metadata.namespace,
       ready: c.status?.conditions?.find((x: any) => x.type === 'Ready')?.status === 'True',
       notAfter: c.status?.notAfter, renewalTime: c.status?.renewalTime, dnsNames: c.spec?.dnsNames,
-    })) || []
+    }))
   },
 
-  async ingresses() {
-    const data = await k8sGet('/apis/networking.k8s.io/v1/ingresses')
-    return data?.items?.map((i: any) => ({
+  ingresses() {
+    return list('/apis/networking.k8s.io/v1/ingresses', (i: any) => ({
       name: i.metadata.name, namespace: i.metadata.namespace,
       class: i.spec?.ingressClassName || i.metadata.annotations?.['kubernetes.io/ingress.class'] || '',
       hosts: i.spec?.rules?.map((r: any) => r.host).filter(Boolean) || [],
@@ -281,35 +280,32 @@ export const k8s = {
       address: i.status?.loadBalancer?.ingress?.[0]?.ip || '',
       tls: !!i.spec?.tls?.length,
       age: i.metadata.creationTimestamp,
-    })) || []
+    }))
   },
 
-  async pvcs() {
-    const data = await k8sGet('/api/v1/persistentvolumeclaims')
-    return data?.items?.map((p: any) => ({
+  pvcs() {
+    return list('/api/v1/persistentvolumeclaims', (p: any) => ({
       namespace: p.metadata.namespace, name: p.metadata.name, status: p.status.phase,
       volume: p.spec.volumeName || '',
       capacity: p.status.capacity?.storage || p.spec.resources?.requests?.storage || '?',
       storageClass: p.spec.storageClassName, accessModes: p.spec.accessModes,
       age: p.metadata.creationTimestamp,
-    })) || []
+    }))
   },
 
-  async services() {
-    const data = await k8sGet('/api/v1/services')
-    return data?.items?.map((s: any) => ({
+  services() {
+    return list('/api/v1/services', (s: any) => ({
       namespace: s.metadata.namespace, name: s.metadata.name,
       type: s.spec.type,
       clusterIP: s.spec.clusterIP,
       externalIP: s.status?.loadBalancer?.ingress?.[0]?.ip || s.spec.externalIPs?.[0] || '',
       ports: (s.spec.ports || []).map((p: any) => `${p.port}${p.nodePort ? ':' + p.nodePort : ''}/${p.protocol}`).join(', '),
       age: s.metadata.creationTimestamp,
-    })) || []
+    }))
   },
 
-  async deployments() {
-    const data = await k8sGet('/apis/apps/v1/deployments')
-    return data?.items?.map((d: any) => ({
+  deployments() {
+    return list('/apis/apps/v1/deployments', (d: any) => ({
       namespace: d.metadata.namespace, name: d.metadata.name, replicas: d.spec.replicas,
       ready: d.status.readyReplicas || 0,
       upToDate: d.status.updatedReplicas || 0,
@@ -317,22 +313,20 @@ export const k8s = {
       age: d.metadata.creationTimestamp,
       image: d.spec.template.spec.containers?.[0]?.image || '',
       conditions: (d.status.conditions || []).map((c: any) => ({ type: c.type, status: c.status })),
-    })) || []
+    }))
   },
 
-  async statefulsets() {
-    const data = await k8sGet('/apis/apps/v1/statefulsets')
-    return data?.items?.map((s: any) => ({
+  statefulsets() {
+    return list('/apis/apps/v1/statefulsets', (s: any) => ({
       namespace: s.metadata.namespace, name: s.metadata.name, replicas: s.spec.replicas,
       ready: s.status.readyReplicas || 0,
       age: s.metadata.creationTimestamp,
       image: s.spec.template.spec.containers?.[0]?.image || '',
-    })) || []
+    }))
   },
 
-  async daemonsets() {
-    const data = await k8sGet('/apis/apps/v1/daemonsets')
-    return data?.items?.map((d: any) => ({
+  daemonsets() {
+    return list('/apis/apps/v1/daemonsets', (d: any) => ({
       namespace: d.metadata.namespace, name: d.metadata.name,
       desired: d.status.desiredNumberScheduled || 0,
       ready: d.status.numberReady || 0,
@@ -340,36 +334,33 @@ export const k8s = {
       available: d.status.numberAvailable || 0,
       age: d.metadata.creationTimestamp,
       image: d.spec.template.spec.containers?.[0]?.image || '',
-    })) || []
+    }))
   },
 
-  async replicasets() {
-    const data = await k8sGet('/apis/apps/v1/replicasets')
-    return data?.items?.map((r: any) => ({
+  replicasets() {
+    return list('/apis/apps/v1/replicasets', (r: any) => ({
       namespace: r.metadata.namespace, name: r.metadata.name,
       desired: r.spec.replicas ?? 0,
       ready: r.status.readyReplicas || 0,
       available: r.status.availableReplicas || 0,
       age: r.metadata.creationTimestamp,
       owner: r.metadata.ownerReferences?.[0]?.name || '',
-    })) || []
+    }))
   },
 
-  async cronjobs() {
-    const data = await k8sGet('/apis/batch/v1/cronjobs')
-    return data?.items?.map((c: any) => ({
+  cronjobs() {
+    return list('/apis/batch/v1/cronjobs', (c: any) => ({
       namespace: c.metadata.namespace, name: c.metadata.name,
       schedule: c.spec.schedule,
       suspend: c.spec.suspend ?? false,
       active: c.status.active?.length || 0,
       lastSchedule: c.status.lastScheduleTime,
       age: c.metadata.creationTimestamp,
-    })) || []
+    }))
   },
 
-  async jobs() {
-    const data = await k8sGet('/apis/batch/v1/jobs')
-    return data?.items?.map((j: any) => ({
+  jobs() {
+    return list('/apis/batch/v1/jobs', (j: any) => ({
       namespace: j.metadata.namespace, name: j.metadata.name,
       completions: `${j.status.succeeded || 0}/${j.spec.completions || 1}`,
       duration: j.status.startTime && j.status.completionTime
@@ -377,26 +368,24 @@ export const k8s = {
         : null,
       status: j.status.conditions?.[0]?.type || (j.status.active ? 'Running' : 'Unknown'),
       age: j.metadata.creationTimestamp,
-    })) || []
+    }))
   },
 
-  async configmaps() {
-    const data = await k8sGet('/api/v1/configmaps')
-    return data?.items?.map((c: any) => ({
+  configmaps() {
+    return list('/api/v1/configmaps', (c: any) => ({
       namespace: c.metadata.namespace, name: c.metadata.name,
       keys: Object.keys(c.data || {}).length,
       age: c.metadata.creationTimestamp,
-    })) || []
+    }))
   },
 
-  async secrets() {
-    const data = await k8sGet('/api/v1/secrets')
-    return data?.items?.map((s: any) => ({
+  secrets() {
+    return list('/api/v1/secrets', (s: any) => ({
       namespace: s.metadata.namespace, name: s.metadata.name,
       type: s.type,
       keys: Object.keys(s.data || {}).length,
       age: s.metadata.creationTimestamp,
-    })) || []
+    }))
   },
 
   // --- Write operations ---
