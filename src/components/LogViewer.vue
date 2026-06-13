@@ -28,7 +28,6 @@ async function fetchLogs() {
 
 function scrollToBottom() {
   if (!logEl.value) return
-  // Scroll the nearest scrollable ancestor (parent has overflow-auto max-h-96)
   const scrollParent = logEl.value.closest('.overflow-auto') || logEl.value.parentElement
   if (scrollParent) scrollParent.scrollTop = scrollParent.scrollHeight
 }
@@ -48,7 +47,6 @@ const filteredLines = computed(() => {
   return lines.value.filter(l => l.toLowerCase().includes(q))
 })
 
-// Escape HTML to prevent XSS from log content
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }

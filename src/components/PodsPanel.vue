@@ -27,7 +27,6 @@ async function deletePod(pod: Pod) {
 }
 
 async function restartDeploy(pod: Pod) {
-  // ownerKind is typically ReplicaSet for Deployments — strip the RS hash suffix
   let deployName = pod.ownerKind === 'ReplicaSet' ? pod.ownerName.replace(/-[a-f0-9]+$/, '') : pod.ownerName || pod.name.replace(/-[a-z0-9]+-[a-z0-9]+$/, '').replace(/-[a-z0-9]+$/, '')
   if (!deployName) { alert('Cannot determine deployment name'); return }
   if (!confirm(`Restart deployment ${pod.namespace}/${deployName}?`)) return
@@ -205,7 +204,6 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
                 <button @click.stop="restartDeploy(pod)" class="text-zinc-600 hover:text-amber-400" title="Restart">↻</button>
               </td>
             </tr>
-            <!-- Container expansion -->
             <tr v-if="expandedPod === podKey(pod)" class="bg-zinc-900/30">
               <td :colspan="colCount" class="px-4 py-1">
                 <div class="text-xs space-y-0.5">
@@ -222,7 +220,6 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
                 </div>
               </td>
             </tr>
-            <!-- Log/exec inline expansion -->
             <tr v-if="selectedPod === podKey(pod)" ref="logPanelEl" class="bg-emerald-900/10">
               <td :colspan="colCount" class="p-0">
                 <div class="px-3 py-1 text-xs bg-zinc-900/80 border-b border-zinc-800/50 flex items-center gap-2">

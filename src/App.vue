@@ -17,11 +17,9 @@ import AlertBar from './components/AlertBar.vue'
 import ResourcesPanel from './components/ResourcesPanel.vue'
 import NodeBar from './components/NodeBar.vue'
 
-// --- Spotlight search ---
 const spotlightOpen = ref(false)
 const spotlightQuery = ref('')
 
-// --- Monitoring sections ---
 type Section = 'resources' | 'security' | 'events'
 const SECTIONS: Section[] = ['resources', 'security', 'events']
 
@@ -132,7 +130,6 @@ onUnmounted(() => {
 
 <template>
   <div class="min-h-screen bg-zinc-950 text-zinc-100">
-    <!-- Top bar -->
     <div class="border-b border-zinc-800 bg-zinc-950/80 sticky top-0 z-20">
       <div class="flex items-center gap-3 px-4 py-2">
         <h1 class="text-sm font-bold text-white tracking-tight uppercase">Lens</h1>
@@ -145,7 +142,6 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- Content -->
     <div class="p-2 sm:p-3 space-y-2">
       <AlertBar :alerts="activeAlerts" />
       <SystemPanel :data="system" />
@@ -195,7 +191,6 @@ onUnmounted(() => {
       <EventsPanel v-else-if="selectedSection === 'events'" ref="eventsRef" />
     </div>
 
-    <!-- Spotlight -->
     <div v-if="spotlightOpen" class="fixed inset-0 bg-black/60 flex items-start justify-center pt-[20vh] z-50" @click.self="spotlightOpen = false">
       <div class="bg-zinc-900 border border-zinc-700 rounded-lg shadow-2xl w-full max-w-md mx-4">
         <div class="flex items-center gap-2 px-4 py-3 border-b border-zinc-800">

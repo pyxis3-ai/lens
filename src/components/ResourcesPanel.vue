@@ -108,13 +108,10 @@ const tabs: { key: ResourceType; label: string; count: () => number }[] = [
       <button @click="loadResources" class="text-xs text-zinc-600 hover:text-zinc-400 ml-auto">↻</button>
     </div>
 
-    <!-- LLM/inference endpoints -->
     <LLMPanel v-if="active === 'llm'" />
 
-    <!-- Pods -->
     <PodsPanel v-else-if="active === 'pods'" ref="podsRef" :pods="pods" :focusedIndex="focusedPodIndex" />
 
-    <!-- Deployments -->
     <div v-else-if="active === 'deploy'" class="overflow-x-auto">
       <table class="w-full text-xs">
         <thead><tr class="text-zinc-600 border-b border-zinc-800">
@@ -155,7 +152,6 @@ const tabs: { key: ResourceType; label: string; count: () => number }[] = [
       </table>
     </div>
 
-    <!-- StatefulSets -->
     <div v-else-if="active === 'sts'" class="overflow-x-auto">
       <table class="w-full text-xs">
         <thead><tr class="text-zinc-600 border-b border-zinc-800">
@@ -189,7 +185,6 @@ const tabs: { key: ResourceType; label: string; count: () => number }[] = [
       </table>
     </div>
 
-    <!-- DaemonSets -->
     <div v-else-if="active === 'ds'" class="overflow-x-auto">
       <table class="w-full text-xs">
         <thead><tr class="text-zinc-600 border-b border-zinc-800">
@@ -227,7 +222,6 @@ const tabs: { key: ResourceType; label: string; count: () => number }[] = [
       </table>
     </div>
 
-    <!-- ReplicaSets -->
     <div v-else-if="active === 'rs'" class="overflow-x-auto">
       <table class="w-full text-xs">
         <thead><tr class="text-zinc-600 border-b border-zinc-800">
@@ -250,7 +244,6 @@ const tabs: { key: ResourceType; label: string; count: () => number }[] = [
       </table>
     </div>
 
-    <!-- Services -->
     <div v-else-if="active === 'svc'" class="overflow-x-auto">
       <table class="w-full text-xs">
         <thead><tr class="text-zinc-600 border-b border-zinc-800">
@@ -287,7 +280,6 @@ const tabs: { key: ResourceType; label: string; count: () => number }[] = [
       </table>
     </div>
 
-    <!-- ConfigMaps -->
     <div v-else-if="active === 'cm'" class="overflow-x-auto">
       <table class="w-full text-xs">
         <thead><tr class="text-zinc-600 border-b border-zinc-800">
@@ -319,7 +311,6 @@ const tabs: { key: ResourceType; label: string; count: () => number }[] = [
       </table>
     </div>
 
-    <!-- Secrets -->
     <div v-else-if="active === 'sec'" class="overflow-x-auto">
       <table class="w-full text-xs">
         <thead><tr class="text-zinc-600 border-b border-zinc-800">
@@ -353,7 +344,6 @@ const tabs: { key: ResourceType; label: string; count: () => number }[] = [
       </table>
     </div>
 
-    <!-- PVCs -->
     <div v-else-if="active === 'pvc'" class="overflow-x-auto">
       <table class="w-full text-xs">
         <thead><tr class="text-zinc-600 border-b border-zinc-800">
@@ -391,7 +381,6 @@ const tabs: { key: ResourceType; label: string; count: () => number }[] = [
       </table>
     </div>
 
-    <!-- Ingresses -->
     <div v-else-if="active === 'ing'" class="overflow-x-auto">
       <table class="w-full text-xs">
         <thead><tr class="text-zinc-600 border-b border-zinc-800">
@@ -428,7 +417,6 @@ const tabs: { key: ResourceType; label: string; count: () => number }[] = [
       </table>
     </div>
 
-    <!-- CronJobs -->
     <div v-else-if="active === 'cj'" class="overflow-x-auto">
       <table class="w-full text-xs">
         <thead><tr class="text-zinc-600 border-b border-zinc-800">
@@ -465,7 +453,6 @@ const tabs: { key: ResourceType; label: string; count: () => number }[] = [
       </table>
     </div>
 
-    <!-- Jobs -->
     <div v-else-if="active === 'job'" class="overflow-x-auto">
       <table class="w-full text-xs">
         <thead><tr class="text-zinc-600 border-b border-zinc-800">

@@ -17,7 +17,6 @@ export const config = {
   k8sApi: process.env.K8S_API || 'https://kubernetes.default.svc',
   k8sWs: process.env.K8S_WS || 'wss://kubernetes.default.svc',
   k8sTokenPath: process.env.K8S_TOKEN_PATH || '/var/run/secrets/kubernetes.io/serviceaccount/token',
-  // Intervals (ms)
   systemInterval: 2000,
   podsInterval: 10000,
   healthInterval: 30000,
@@ -29,7 +28,6 @@ export const config = {
   webhookTimeout: 5000,
   nginxCacheTTL: 10000,
   cleanupInterval: 3600_000,
-  // Retention
   attackRetentionDays: 30,
   apiSecret: process.env.API_SECRET || '',
 }
