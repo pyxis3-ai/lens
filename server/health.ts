@@ -9,19 +9,22 @@ export const health = {
     if (Date.now() - _lastCheck < config.healthInterval && _cache.length) return _cache
 
     const ingresses = await k8s.ingresses()
-    const hosts = new Map<string, string>()
+    const hosts = new Map<string, { namespace: string; path: string }>()
 
     for (const ing of ingresses) {
       for (const host of ing.hosts) {
-        if (host && !hosts.has(host)) {
-          hosts.set(host, ing.namespace)
-        }
+        if (!host) continue
+        // First ingress wins for namespace; a non-default health-path wins regardless of order
+        // (mergeable master/minion ingresses share a host — the annotation may live on either).
+        const cur = hosts.get(host)
+        if (!cur) hosts.set(host, { namespace: ing.namespace, path: ing.healthPath })
+        else if (ing.healthPath !== '/' && cur.path === '/') cur.path = ing.healthPath
       }
     }
 
     const results = await Promise.all(
-      [...hosts.entries()].map(async ([host, namespace]) => {
-        const url = `https://${host}/`
+      [...hosts.entries()].map(async ([host, { namespace, path }]) => {
+        const url = `https://${host}${path}`
         const start = performance.now()
         try {
           const res = await fetch(url, {
