@@ -166,29 +166,22 @@ export const k8s = {
       tail = container
       container = undefined
     }
-
-    if (container) {
-      const res = await fetch(
-        `${API}/api/v1/namespaces/${encodeURIComponent(namespace)}/pods/${encodeURIComponent(pod)}/log?tailLines=${tail}&container=${encodeURIComponent(container)}`,
-        { headers: { Authorization: `Bearer ${t}` }, tls: { rejectUnauthorized: false } as any }
-      )
+    const base = `${API}/api/v1/namespaces/${encodeURIComponent(namespace)}/pods/${encodeURIComponent(pod)}/log?tailLines=${tail}`
+    const fetchLog = async (cname: string) => {
+      const res = await fetch(`${base}&container=${encodeURIComponent(cname)}`, { headers: { Authorization: `Bearer ${t}` }, tls: { rejectUnauthorized: false } as any })
       return res.ok ? (await res.text()).split('\n').filter(Boolean) : [`Error: ${res.status}`]
     }
+
+    if (container) return fetchLog(container)
 
     const podInfo = await k8sGet(`/api/v1/namespaces/${encodeURIComponent(namespace)}/pods/${encodeURIComponent(pod)}`)
     if (!podInfo?.spec?.containers) return ['Error: pod not found']
 
+    const containers: string[] = podInfo.spec.containers.map((c: any) => c.name)
     const logs: string[] = []
-    const containers = podInfo.spec.containers.map((c: any) => c.name)
-
     for (const cname of containers) {
-      const res = await fetch(
-        `${API}/api/v1/namespaces/${encodeURIComponent(namespace)}/pods/${encodeURIComponent(pod)}/log?tailLines=${tail}&container=${encodeURIComponent(cname)}`,
-        { headers: { Authorization: `Bearer ${t}` }, tls: { rejectUnauthorized: false } as any }
-      )
       if (containers.length > 1) logs.push(`─── ${cname} ───`)
-      if (res.ok) logs.push(...(await res.text()).split('\n').filter(Boolean))
-      else logs.push(`Error: ${res.status}`)
+      logs.push(...(await fetchLog(cname)))
     }
     return logs
   },
