@@ -22,7 +22,6 @@ const sortedHosts = computed(() => {
         <button @click="loadAuthelia" class="text-zinc-600 hover:text-zinc-400 ml-auto">↻</button>
       </div>
 
-      <!-- Blocked by host -->
       <div v-if="sortedHosts.length" class="text-xs">
         <div class="flex items-center gap-2 mb-0.5">
           <span class="text-zinc-600">blocked by host:</span>
@@ -36,7 +35,6 @@ const sortedHosts = computed(() => {
       </div>
     </div>
 
-    <!-- Recent authenticated access -->
     <div v-if="autheliaStats.recent?.length" class="overflow-x-auto">
       <div class="text-xs text-zinc-500 mb-1">RECENT AUTH</div>
       <table class="w-full text-xs">

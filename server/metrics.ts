@@ -18,14 +18,12 @@ async function readProc(path: string): Promise<string> {
   try { return await readFile(path, 'utf-8') } catch { return '' }
 }
 
-// CPU usage tracking (need two samples to calculate)
 let prevCpu = { idle: 0, total: 0 }
 let prevPerCore: { idle: number; total: number }[] = []
 
 function parseCpuUsage(stat: string): { percent: number; perCore: number[] } {
   const lines = stat.split('\n')
 
-  // Aggregate CPU
   const aggParts = lines[0].replace(/^cpu\s+/, '').split(/\s+/).map(Number)
   const aggIdle = aggParts[3] + (aggParts[4] || 0)
   const aggTotal = aggParts.reduce((s, v) => s + v, 0)
@@ -34,7 +32,6 @@ function parseCpuUsage(stat: string): { percent: number; perCore: number[] } {
   prevCpu = { idle: aggIdle, total: aggTotal }
   const percent = dTotal === 0 ? 0 : Math.round((1 - dIdle / dTotal) * 100 * 10) / 10
 
-  // Per-core CPU
   const perCore: number[] = []
   const coreLines = lines.filter(l => /^cpu\d+/.test(l))
   for (let i = 0; i < coreLines.length; i++) {
@@ -79,7 +76,6 @@ export const metrics = {
       readProc(`${PROC}/net/tcp`),
     ])
 
-    // Memory
     const memTotal = parseInt(meminfo.match(/MemTotal:\s+(\d+)/)?.[1] || '0') * 1024
     const memAvail = parseInt(meminfo.match(/MemAvailable:\s+(\d+)/)?.[1] || '0') * 1024
     const memUsed = memTotal - memAvail
@@ -88,14 +84,12 @@ export const metrics = {
     const swapTotal = parseInt(meminfo.match(/SwapTotal:\s+(\d+)/)?.[1] || '0') * 1024
     const swapFree = parseInt(meminfo.match(/SwapFree:\s+(\d+)/)?.[1] || '0') * 1024
 
-    // CPU
     const { percent: cpuPercent, perCore } = parseCpuUsage(stat)
     const cpuCount = perCore.length || (stat.match(/^cpu\d+/gm) || []).length
     const loads = loadavg.split(' ')
     const processes = parseInt(loads[3]?.split('/')[1] || '0')
     const connections = netstat.split('\n').filter(l => l.trim() && !l.includes('local_address')).length
 
-    // Network rate
     const net = parseNetworkBytes(netdev)
     const now = Date.now()
     const dt = (now - prevNet.ts) / 1000

@@ -37,7 +37,6 @@ function toggleThresholds() {
 
 <template>
   <div v-if="alerts.length || showThresholds">
-    <!-- Active alerts -->
     <div v-if="alerts.length" class="bg-zinc-900/50 border border-zinc-800/50 rounded px-3 py-1.5 mb-2">
       <div class="flex items-center gap-2 text-xs mb-1">
         <span class="text-red-400">ALERTS</span>
@@ -56,7 +55,6 @@ function toggleThresholds() {
       </div>
     </div>
 
-    <!-- Thresholds editor -->
     <div v-if="showThresholds" class="bg-zinc-900/50 border border-zinc-800/50 rounded px-3 py-2 mb-2">
       <div class="flex items-center gap-2 text-xs mb-1.5">
         <span class="text-zinc-500">THRESHOLDS</span>

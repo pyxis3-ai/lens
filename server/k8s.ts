@@ -25,7 +25,7 @@ export async function k8sGet(path: string): Promise<any> {
   try {
     const res = await fetch(`${API}${path}`, {
       headers: { Authorization: `Bearer ${t}` },
-      // @ts-ignore
+
       tls: { rejectUnauthorized: false },
     })
     if (!res.ok) {
@@ -47,7 +47,7 @@ async function k8sWrite(method: string, path: string, body?: any): Promise<{ ok:
       method,
       headers: { Authorization: `Bearer ${t}`, 'Content-Type': method === 'PATCH' ? 'application/strategic-merge-patch+json' : 'application/json' },
       body: body ? JSON.stringify(body) : undefined,
-      // @ts-ignore
+
       tls: { rejectUnauthorized: false },
     })
     const data = await res.json().catch(() => ({}))
@@ -73,11 +73,9 @@ function parseMem(v: string): number {
   return parseInt(v)
 }
 
-// GET a collection and shape each item; [] on any failure. Most read methods are exactly this.
 const list = async (path: string, shape: (item: any) => any): Promise<any[]> => ((await k8sGet(path))?.items || []).map(shape)
 
 export const k8s = {
-  // --- Read operations ---
 
   async pods() {
     const [podData, topData] = await Promise.all([
@@ -88,7 +86,6 @@ export const k8s = {
 
     const metricsAvailable = !!topData?.items
 
-    // Build per-container metrics map: ns/pod/container → {cpu, memory}
     const containerMetrics: Record<string, { cpu: number; memory: number }> = {}
     const podMetrics: Record<string, { cpu: number; memory: number }> = {}
     for (const t of topData?.items || []) {
@@ -109,7 +106,6 @@ export const k8s = {
       const top = podMetrics[podKey]
       const term = p.status.containerStatuses?.find((c: any) => c.lastState?.terminated)?.lastState?.terminated
 
-      // Container-level detail: metrics + requests/limits from spec
       const containers = (p.spec.containers || []).map((c: any) => {
         const cStatus = p.status.containerStatuses?.find((s: any) => s.name === c.name)
         const cMetrics = containerMetrics[`${podKey}/${c.name}`]
@@ -118,10 +114,8 @@ export const k8s = {
           ready: cStatus?.ready ?? false,
           restarts: cStatus?.restartCount || 0,
           state: cStatus?.state ? Object.keys(cStatus.state)[0] : 'unknown',
-          // Actual usage from metrics-server (null if unavailable)
           cpu: cMetrics ? cMetrics.cpu : null,
           memory: cMetrics ? cMetrics.memory : null,
-          // Requests/limits from pod spec (always available — graceful degradation)
           requests: {
             cpu: c.resources?.requests?.cpu || null,
             memory: c.resources?.requests?.memory ? parseMem(c.resources.requests.memory) : null,
@@ -238,9 +232,7 @@ export const k8s = {
         containerRuntime: n.status.nodeInfo?.containerRuntimeVersion,
         conditions: conditions
           .filter((c: any) => {
-            // Show problems: pressure/unavailable conditions that are True
             if (['MemoryPressure', 'DiskPressure', 'PIDPressure', 'NetworkUnavailable'].includes(c.type)) return c.status === 'True'
-            // Hide: Ready (shown via status), and healthy informational conditions
             return false
           })
           .map((c: any) => c.type),
@@ -274,8 +266,6 @@ export const k8s = {
       name: i.metadata.name, namespace: i.metadata.namespace,
       class: i.spec?.ingressClassName || i.metadata.annotations?.['kubernetes.io/ingress.class'] || '',
       hosts: i.spec?.rules?.map((r: any) => r.host).filter(Boolean) || [],
-      // Opt-in health path: key-protected/auth-walled hosts can point the uptime probe at an open
-      // liveness endpoint (e.g. lens.pyxis3.ai/health-path: /health) instead of the default '/'.
       healthPath: i.metadata.annotations?.['lens.pyxis3.ai/health-path'] || '/',
       address: i.status?.loadBalancer?.ingress?.[0]?.ip || '',
       tls: !!i.spec?.tls?.length,
@@ -387,8 +377,6 @@ export const k8s = {
       age: s.metadata.creationTimestamp,
     }))
   },
-
-  // --- Write operations ---
 
   async deletePod(namespace: string, name: string) {
     return k8sWrite('DELETE', `/api/v1/namespaces/${encodeURIComponent(namespace)}/pods/${encodeURIComponent(name)}`)

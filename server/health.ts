@@ -14,8 +14,6 @@ export const health = {
     for (const ing of ingresses) {
       for (const host of ing.hosts) {
         if (!host) continue
-        // First ingress wins for namespace; a non-default health-path wins regardless of order
-        // (mergeable master/minion ingresses share a host — the annotation may live on either).
         const cur = hosts.get(host)
         if (!cur) hosts.set(host, { namespace: ing.namespace, path: ing.healthPath })
         else if (ing.healthPath !== '/' && cur.path === '/') cur.path = ing.healthPath
@@ -30,7 +28,7 @@ export const health = {
           const res = await fetch(url, {
             redirect: 'manual',
             signal: AbortSignal.timeout(config.healthTimeout),
-            // @ts-ignore
+
             tls: { rejectUnauthorized: false },
           })
           const latency = Math.round(performance.now() - start)

@@ -9,7 +9,6 @@ export const nginxStats = ref<NginxStats | null>(null)
 export const activeAlerts = ref<Alert[]>([])
 export const connected = ref(false)
 
-// REST-hydrated data
 export const attacks = ref<NginxAttack[]>([])
 export const attackStats = ref<{ last1h: number; last24h: number; topIPs: { ip: string; c: number }[]; topPaths: { uri: string; c: number }[] } | null>(null)
 export const events = ref<K8sEvent[]>([])

@@ -15,8 +15,6 @@ function clampInt(val: string | null, fallback: number, min: number, max: number
   return isNaN(n) ? fallback : Math.max(min, Math.min(max, n))
 }
 
-// Argument-free GET endpoints: path → producer (value or promise). Everything that needs query params,
-// headers, or a request body is handled explicitly below.
 const GET_ROUTES: Record<string, () => unknown> = {
   '/api/health': () => ({ status: 'ok' }),
   '/api/system': () => metrics.system(),
@@ -55,7 +53,6 @@ const server = Bun.serve({
     const path = url.pathname
     const q = url.searchParams
 
-    // WebSocket upgrades
     if (path === '/ws') {
       if ((server.upgrade as any)(req, { data: { type: 'broadcast' } })) return
       return new Response('WebSocket upgrade failed', { status: 400 })
@@ -67,14 +64,12 @@ const server = Bun.serve({
       return new Response('WebSocket upgrade failed', { status: 400 })
     }
 
-    // Auth check for non-health endpoints
     if (config.apiSecret && path !== '/api/health') {
       const auth = req.headers.get('x-api-secret') || req.headers.get('authorization')?.replace('Bearer ', '')
       if (auth !== config.apiSecret) return new Response('Unauthorized', { status: 401 })
     }
 
     if (req.method === 'GET') {
-      // Argument-bearing GET endpoints
       if (path === '/api/user') {
         const name = req.headers.get('Remote-Name') || req.headers.get('Remote-User') || ''
         return Response.json({ name, email: req.headers.get('Remote-Email') || '', initial: name.charAt(0).toUpperCase() || '?' })
@@ -107,7 +102,6 @@ const server = Bun.serve({
         const p = paths[q.get('kind') || '']
         return p ? Response.json(await k8sGet(p)) : Response.json({ error: 'unknown kind' }, { status: 400 })
       }
-      // Argument-free GET endpoints
       const producer = GET_ROUTES[path]
       if (producer) return Response.json(await producer())
     }
@@ -137,7 +131,6 @@ const server = Bun.serve({
       }
     }
 
-    // --- Static files (SPA) ---
     const distRoot = resolve(import.meta.dir, '..', 'dist')
     const requestedPath = resolve(distRoot, '.' + (path === '/' ? '/index.html' : path))
     if (!requestedPath.startsWith(distRoot)) return new Response('Forbidden', { status: 403 })

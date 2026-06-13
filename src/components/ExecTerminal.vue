@@ -21,9 +21,9 @@ function connect() {
     fontSize: 12,
     fontFamily: "'JetBrains Mono', monospace",
     theme: {
-      background: '#09090b', // zinc-950
-      foreground: '#d4d4d8', // zinc-300
-      cursor: '#10b981', // emerald-500
+      background: '#09090b',
+      foreground: '#d4d4d8',
+      cursor: '#10b981',
       selectionBackground: '#10b98133',
       black: '#18181b',
       red: '#f87171',
@@ -53,23 +53,19 @@ function connect() {
     terminal.open(termEl.value)
     fitAddon!.fit()
 
-    // Watch for container resize
     resizeObserver = new ResizeObserver(() => {
       try { fitAddon?.fit() } catch { /* resize may fail during teardown */ }
     })
     resizeObserver.observe(termEl.value)
 
-    // Send resize on fit
     terminal.onResize(({ cols, rows }) => {
       if (ws?.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: 'resize', cols, rows }))
       }
     })
 
-    // Connect WebSocket
     ws = new WebSocket(url)
     ws.onopen = () => {
-      // Send initial size
       if (terminal) {
         ws!.send(JSON.stringify({ type: 'resize', cols: terminal.cols, rows: terminal.rows }))
       }
@@ -84,7 +80,6 @@ function connect() {
       terminal?.write('\r\n\x1b[31m[connection error]\x1b[0m\r\n')
     }
 
-    // Send keystrokes to server
     terminal.onData((data) => {
       if (ws?.readyState === WebSocket.OPEN) {
         ws.send(data)

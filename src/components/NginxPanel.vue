@@ -34,7 +34,6 @@ const sortedHosts = computed(() => {
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
-      <!-- IPs -->
       <div class="bg-zinc-900/50 border border-zinc-800/50 rounded px-3 py-2">
         <div class="flex items-center justify-between text-xs text-zinc-500 mb-1">
           <span>TOP IPs ({{ data.topIPs.length }})</span>
@@ -46,7 +45,6 @@ const sortedHosts = computed(() => {
         </div>
       </div>
 
-      <!-- Hosts -->
       <div class="bg-zinc-900/50 border border-zinc-800/50 rounded px-3 py-2">
         <div class="flex items-center justify-between text-xs text-zinc-500 mb-1">
           <span>HOSTS ({{ sortedHosts.length }})</span>
@@ -58,7 +56,6 @@ const sortedHosts = computed(() => {
         </div>
       </div>
 
-      <!-- TLS -->
       <div class="bg-zinc-900/50 border border-zinc-800/50 rounded px-3 py-2">
         <div class="text-xs text-zinc-500 mb-1">TLS</div>
         <div v-for="(count, ver) in data.tlsVersions" :key="ver" class="text-xs flex justify-between">
@@ -67,7 +64,6 @@ const sortedHosts = computed(() => {
         </div>
       </div>
 
-      <!-- Paths -->
       <div class="bg-zinc-900/50 border border-zinc-800/50 rounded px-3 py-2">
         <div class="flex items-center justify-between text-xs text-zinc-500 mb-1">
           <span>PATHS ({{ data.topPaths.length }})</span>

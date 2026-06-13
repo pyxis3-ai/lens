@@ -22,7 +22,6 @@ export const security = {
 
     const jails: Record<string, { banned: Set<string>; totalBanned: number; probes: number; probeIPs: Set<string> }> = {}
     for (const line of lines) {
-      // Ban/Unban events
       let m = line.match(/\[(\S+)\]\s+(Ban|Unban)\s+(\S+)/)
       if (m) {
         const [, jail, action, ip] = m
@@ -31,7 +30,6 @@ export const security = {
         else jails[jail].banned.delete(ip)
         continue
       }
-      // Found events (probes before ban)
       m = line.match(/\[(\S+)\]\s+Found\s+(\S+)/)
       if (m) {
         const [, jail, ip] = m
@@ -58,7 +56,6 @@ export const security = {
       const userCounts: Record<string, number> = {}
 
       for (const line of lines) {
-        // Invalid user
         let m = line.match(/^(\S+)\s.*Invalid user (\S+) from (\S+)/)
         if (m) {
           attacks.push({ time: m[1], ip: m[3], user: m[2], type: 'invalid-user' })
@@ -66,7 +63,6 @@ export const security = {
           userCounts[m[2]] = (userCounts[m[2]] || 0) + 1
           continue
         }
-        // Failed password
         m = line.match(/^(\S+)\s.*Failed password for (?:invalid user )?(\S+) from (\S+)/)
         if (m) {
           attacks.push({ time: m[1], ip: m[3], user: m[2], type: 'failed-password' })
@@ -74,7 +70,6 @@ export const security = {
           userCounts[m[2]] = (userCounts[m[2]] || 0) + 1
           continue
         }
-        // Disconnected from authenticating user (brute force probes)
         m = line.match(/^(\S+)\s.*Disconnected from authenticating user (\S+) (\S+)/)
         if (m) {
           attacks.push({ time: m[1], ip: m[3], user: m[2], type: 'disconnect-probe' })
