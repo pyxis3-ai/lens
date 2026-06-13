@@ -59,6 +59,10 @@ async function fetchJson(url: string) {
   return res.json()
 }
 
+function postJson(url: string, body: unknown) {
+  return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+}
+
 export async function loadSSH() {
   try { sshAttacks.value = await fetchJson('/api/security/ssh') } catch (e) { console.error('[ws] loadSSH failed:', e) }
 }
@@ -138,20 +142,16 @@ export async function loadLLM(force = false) {
 }
 
 export async function ackAlert(id: string) {
-  try {
-    await fetch('/api/alerts/ack', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
-  } catch (e) { console.error('[ws] ackAlert failed:', e) }
+  try { await postJson('/api/alerts/ack', { id }) } catch (e) { console.error('[ws] ackAlert failed:', e) }
 }
 
 export async function dismissAlert(id: string) {
-  try {
-    await fetch('/api/alerts/dismiss', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
-  } catch (e) { console.error('[ws] dismissAlert failed:', e) }
+  try { await postJson('/api/alerts/dismiss', { id }) } catch (e) { console.error('[ws] dismissAlert failed:', e) }
 }
 
 export async function saveThreshold(id: string, warn: number, crit: number) {
   try {
-    await fetch('/api/alerts/thresholds', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, warn, crit }) })
+    await postJson('/api/alerts/thresholds', { id, warn, crit })
     await loadThresholds()
   } catch (e) { console.error('[ws] saveThreshold failed:', e) }
 }

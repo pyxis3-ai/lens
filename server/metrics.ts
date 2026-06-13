@@ -1,16 +1,7 @@
 import { readFile } from 'fs/promises'
 import { statfsSync } from 'fs'
 import { config } from './config'
-
-export interface SystemMetrics {
-  cpu: { percent: number; cores: number; perCore: number[]; load1: number; load5: number; load15: number }
-  memory: { total: number; used: number; available: number; percent: number; buffers: number; cached: number }
-  swap: { total: number; used: number; percent: number }
-  disk: { total: number; used: number; free: number; percent: number }
-  network: { rxBytes: number; txBytes: number; rxRate: number; txRate: number; connections: number }
-  uptime: number
-  processes: number
-}
+import type { SystemMetrics } from '../src/lib/types'
 
 const PROC = config.hostProc
 

@@ -1,6 +1,7 @@
 import { readFile } from 'fs/promises'
 import { k8s } from './k8s'
 import { config } from './config'
+import { bump, topN } from './util'
 
 export const security = {
   async summary() {
@@ -59,26 +60,26 @@ export const security = {
         let m = line.match(/^(\S+)\s.*Invalid user (\S+) from (\S+)/)
         if (m) {
           attacks.push({ time: m[1], ip: m[3], user: m[2], type: 'invalid-user' })
-          ipCounts[m[3]] = (ipCounts[m[3]] || 0) + 1
-          userCounts[m[2]] = (userCounts[m[2]] || 0) + 1
+          bump(ipCounts, m[3])
+          bump(userCounts, m[2])
           continue
         }
         m = line.match(/^(\S+)\s.*Failed password for (?:invalid user )?(\S+) from (\S+)/)
         if (m) {
           attacks.push({ time: m[1], ip: m[3], user: m[2], type: 'failed-password' })
-          ipCounts[m[3]] = (ipCounts[m[3]] || 0) + 1
-          userCounts[m[2]] = (userCounts[m[2]] || 0) + 1
+          bump(ipCounts, m[3])
+          bump(userCounts, m[2])
           continue
         }
         m = line.match(/^(\S+)\s.*Disconnected from authenticating user (\S+) (\S+)/)
         if (m) {
           attacks.push({ time: m[1], ip: m[3], user: m[2], type: 'disconnect-probe' })
-          ipCounts[m[3]] = (ipCounts[m[3]] || 0) + 1
+          bump(ipCounts, m[3])
         }
       }
 
-      const topIPs = Object.entries(ipCounts).sort((a, b) => b[1] - a[1]).slice(0, 10)
-      const topUsers = Object.entries(userCounts).sort((a, b) => b[1] - a[1]).slice(0, 10)
+      const topIPs = topN(ipCounts, 10)
+      const topUsers = topN(userCounts, 10)
 
       const invalidUsers = attacks.filter(a => a.type === 'invalid-user').length
       const failedPasswords = attacks.filter(a => a.type === 'failed-password').length
@@ -121,7 +122,7 @@ export const security = {
 
         if (status >= 400) {
           blocked++
-          if (host) byHost[host] = (byHost[host] || 0) + 1
+          if (host) bump(byHost, host)
         }
 
         if (user !== '<anonymous>') {
@@ -144,7 +145,7 @@ export const security = {
         try {
           const j = JSON.parse(l)
           if (j.status >= 400) return { time: j.time, ip: j.remote, method: j.method, uri: j.uri, status: j.status, host: j.host, ua: j.ua }
-        } catch { /* unparseable line, skip */ }
+        } catch {}
         return null
       })
       .filter((a): a is NonNullable<typeof a> => a !== null)

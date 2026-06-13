@@ -1,19 +1,7 @@
 import { k8s } from './k8s'
 import { config } from './config'
-
-export interface NginxStats {
-  requestsTotal: number
-  totalBytes: number
-  byStatus: Record<string, number>
-  byHost: Record<string, number>
-  topIPs: { ip: string; count: number }[]
-  topPaths: { uri: string; count: number }[]
-  topUAs: { ua: string; count: number }[]
-  avgResponseTime: number
-  avgUpstreamTime: number
-  wafBlocks: number
-  tlsVersions: Record<string, number>
-}
+import { bump, topN } from './util'
+import type { NginxStats } from '../src/lib/types'
 
 let _cache: NginxStats | null = null
 let _cacheTime = 0
@@ -23,7 +11,7 @@ async function doFetch(lines: number): Promise<NginxStats> {
     const pods = await k8s.podsByLabel(config.nginxNamespace, config.nginxLabel)
     if (!pods.length) { _cache = emptyStats(); _cacheTime = Date.now(); return _cache }
 
-    const raw = await k8s.podLogs(config.nginxNamespace, pods[0], lines)
+    const raw = await k8s.podLogs(config.nginxNamespace, pods[0], undefined, lines)
 
     const statusMap: Record<string, number> = {}
     const hostMap: Record<string, number> = {}
@@ -45,14 +33,12 @@ async function doFetch(lines: number): Promise<NginxStats> {
         const j = JSON.parse(line)
         total++
 
-        const status = String(j.status)
-        statusMap[status] = (statusMap[status] || 0) + 1
-
-        if (j.host) hostMap[j.host] = (hostMap[j.host] || 0) + 1
-        if (j.remote) ipMap[j.remote] = (ipMap[j.remote] || 0) + 1
-        if (j.uri) pathMap[j.uri] = (pathMap[j.uri] || 0) + 1
-        if (j.ua && j.ua !== '-') uaMap[j.ua] = (uaMap[j.ua] || 0) + 1
-        if (j.ssl && j.ssl !== '-') tlsMap[j.ssl] = (tlsMap[j.ssl] || 0) + 1
+        bump(statusMap, String(j.status))
+        if (j.host) bump(hostMap, j.host)
+        if (j.remote) bump(ipMap, j.remote)
+        if (j.uri) bump(pathMap, j.uri)
+        if (j.ua && j.ua !== '-') bump(uaMap, j.ua)
+        if (j.ssl && j.ssl !== '-') bump(tlsMap, j.ssl)
 
         if (j.bytes) totalBytes += parseInt(j.bytes) || 0
         if (j.rt) {
@@ -68,20 +54,9 @@ async function doFetch(lines: number): Promise<NginxStats> {
 
     wafBlocks = raw.filter(l => l.includes('ModSecurity') && l.includes('Access denied')).length
 
-    const topIPs = Object.entries(ipMap)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 20)
-      .map(([ip, count]) => ({ ip, count }))
-
-    const topPaths = Object.entries(pathMap)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 15)
-      .map(([uri, count]) => ({ uri, count }))
-
-    const topUAs = Object.entries(uaMap)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
-      .map(([ua, count]) => ({ ua, count }))
+    const topIPs = topN(ipMap, 20).map(([ip, count]) => ({ ip, count }))
+    const topPaths = topN(pathMap, 15).map(([uri, count]) => ({ uri, count }))
+    const topUAs = topN(uaMap, 10).map(([ua, count]) => ({ ua, count }))
 
     _cache = {
       requestsTotal: total,

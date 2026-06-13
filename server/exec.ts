@@ -21,14 +21,14 @@ export async function startExec(clientWs: any) {
   try {
     const wsUrl = `${url}&protocols=v4.channel.k8s.io`
 
-    const k8sWs = new WebSocket(wsUrl, { headers: { Authorization: `Bearer ${token}`, 'Sec-WebSocket-Protocol': 'v4.channel.k8s.io' }, tls: { rejectUnauthorized: false } })
+    const k8sWs = new WebSocket(wsUrl, { headers: { Authorization: `Bearer ${token}`, 'Sec-WebSocket-Protocol': 'v4.channel.k8s.io' }, tls: { rejectUnauthorized: false } } as any)
 
     k8sWs.binaryType = 'arraybuffer'
 
     k8sWs.onopen = () => {
       if (clientWs.readyState !== WebSocket.OPEN) { k8sWs.close(); return }
       sessions.set(clientWs, k8sWs)
-      try { clientWs.send('\x1b[32m[exec]\x1b[0m Connected to ' + namespace + '/' + pod + ':' + container + '\r\n') } catch { /* client already disconnected */ }
+      try { clientWs.send('\x1b[32m[exec]\x1b[0m Connected to ' + namespace + '/' + pod + ':' + container + '\r\n') } catch {}
     }
 
     k8sWs.onmessage = (event: MessageEvent) => {
@@ -48,15 +48,15 @@ export async function startExec(clientWs: any) {
 
     k8sWs.onclose = () => {
       sessions.delete(clientWs)
-      try { clientWs.send('\r\n\x1b[31m[exec]\x1b[0m Session closed\r\n') } catch { /* ignore */ }
-      try { clientWs.close() } catch { /* ignore */ }
+      try { clientWs.send('\r\n\x1b[31m[exec]\x1b[0m Session closed\r\n') } catch {}
+      try { clientWs.close() } catch {}
     }
 
     k8sWs.onerror = (e: Event) => {
       console.error('[exec] k8s WebSocket error:', (e as ErrorEvent).message || 'unknown')
       sessions.delete(clientWs)
-      try { clientWs.send('\r\n\x1b[31m[exec]\x1b[0m Connection error\r\n') } catch { /* ignore */ }
-      try { clientWs.close() } catch { /* ignore */ }
+      try { clientWs.send('\r\n\x1b[31m[exec]\x1b[0m Connection error\r\n') } catch {}
+      try { clientWs.close() } catch {}
     }
   } catch (e) {
     clientWs.send(`\r\n[exec] Failed to connect: ${(e as Error).message}\r\n`)
@@ -80,7 +80,7 @@ export function execMessage(clientWs: any, msg: string | Buffer) {
         k8sWs.send(buf)
         return
       }
-    } catch { /* not a JSON resize message, treat as raw input */ }
+    } catch {}
 
     const encoded = encoder.encode(msg)
     const buf = new Uint8Array(1 + encoded.length)
@@ -93,7 +93,7 @@ export function execMessage(clientWs: any, msg: string | Buffer) {
 export function stopExec(clientWs: any) {
   const k8sWs = sessions.get(clientWs)
   if (k8sWs) {
-    try { k8sWs.close() } catch { /* ignore */ }
+    try { k8sWs.close() } catch {}
     sessions.delete(clientWs)
   }
 }
