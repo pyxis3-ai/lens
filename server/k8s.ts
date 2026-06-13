@@ -282,6 +282,9 @@ export const k8s = {
       name: i.metadata.name, namespace: i.metadata.namespace,
       class: i.spec?.ingressClassName || i.metadata.annotations?.['kubernetes.io/ingress.class'] || '',
       hosts: i.spec?.rules?.map((r: any) => r.host).filter(Boolean) || [],
+      // Opt-in health path: key-protected/auth-walled hosts can point the uptime probe at an open
+      // liveness endpoint (e.g. lens.pyxis3.ai/health-path: /health) instead of the default '/'.
+      healthPath: i.metadata.annotations?.['lens.pyxis3.ai/health-path'] || '/',
       address: i.status?.loadBalancer?.ingress?.[0]?.ip || '',
       tls: !!i.spec?.tls?.length,
       age: i.metadata.creationTimestamp,
