@@ -59,7 +59,7 @@ async function fetchJson(url: string) {
   return res.json()
 }
 
-function postJson(url: string, body: unknown) {
+export function postJson(url: string, body: unknown) {
   return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 }
 

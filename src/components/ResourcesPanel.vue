@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { pods, deployments, statefulsets, pvcs, ingresses, k8sServices, daemonsets, replicasets, cronjobs, jobs, configmaps, secrets, loadResources, namespaceFilter, llmEndpoints } from '../lib/ws'
+import { pods, deployments, statefulsets, pvcs, ingresses, k8sServices, daemonsets, replicasets, cronjobs, jobs, configmaps, secrets, loadResources, namespaceFilter, llmEndpoints, postJson } from '../lib/ws'
 import { timeAgo } from '../lib/formatters'
 import PodsPanel from './PodsPanel.vue'
 import LLMPanel from './LLMPanel.vue'
@@ -24,13 +24,13 @@ async function scale(ns: string, name: string) {
   if (r === null) return
   const replicas = parseInt(r)
   if (isNaN(replicas) || replicas < 0) return
-  await fetch('/api/deployment/scale', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ namespace: ns, name, replicas }) })
+  await postJson('/api/deployment/scale', { namespace: ns, name, replicas })
   setTimeout(loadResources, 2000)
 }
 
 async function restart(ns: string, name: string) {
   if (!confirm(`Restart ${ns}/${name}?`)) return
-  await fetch('/api/deployment/restart', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ namespace: ns, name }) })
+  await postJson('/api/deployment/restart', { namespace: ns, name })
 }
 
 async function describe(kind: string, ns: string, name: string) {
