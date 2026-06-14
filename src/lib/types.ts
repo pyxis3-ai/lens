@@ -61,6 +61,8 @@ export interface AlertThresholds {
   [key: string]: { warn: number; crit: number }
 }
 
+export type ResourceCol = { h: string; r?: boolean; cls?: string | ((row: any) => string); val: (row: any) => any }
+
 export interface LLMEndpoint {
   namespace: string
   service: string
