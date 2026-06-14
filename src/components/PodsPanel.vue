@@ -2,7 +2,7 @@
 import { computed, ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import type { Pod } from '../lib/types'
 import { timeAgo, formatBytes, podSymbol, podColor } from '../lib/formatters'
-import { namespaceFilter } from '../lib/ws'
+import { namespaceFilter, postJson } from '../lib/ws'
 import LogViewer from './LogViewer.vue'
 import ExecTerminal from './ExecTerminal.vue'
 
@@ -23,14 +23,14 @@ function toggleSort(field: typeof sortField.value) {
 
 async function deletePod(pod: Pod) {
   if (!confirm(`Delete ${pod.namespace}/${pod.name}?`)) return
-  await fetch('/api/pod/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ namespace: pod.namespace, name: pod.name }) })
+  await postJson('/api/pod/delete', { namespace: pod.namespace, name: pod.name })
 }
 
 async function restartDeploy(pod: Pod) {
   let deployName = pod.ownerKind === 'ReplicaSet' ? pod.ownerName.replace(/-[a-f0-9]+$/, '') : pod.ownerName || pod.name.replace(/-[a-z0-9]+-[a-z0-9]+$/, '').replace(/-[a-z0-9]+$/, '')
   if (!deployName) { alert('Cannot determine deployment name'); return }
   if (!confirm(`Restart deployment ${pod.namespace}/${deployName}?`)) return
-  await fetch('/api/deployment/restart', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ namespace: pod.namespace, name: deployName }) })
+  await postJson('/api/deployment/restart', { namespace: pod.namespace, name: deployName })
 }
 
 function cpuNum(cpu: string | null): number {
