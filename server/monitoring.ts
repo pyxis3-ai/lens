@@ -107,31 +107,23 @@ async function sendWebhook(alert: Alert) {
   }
 }
 
+function levelCheck(prefix: string, value: number, th: Threshold, msg: string) {
+  if (value > th.crit) fire(`${prefix}-crit`, 'critical', msg)
+  else if (value > th.warn) fire(`${prefix}-warn`, 'warning', msg)
+  else { resolve(`${prefix}-crit`); resolve(`${prefix}-warn`) }
+}
+
 function evaluateAlerts(system: SystemMetrics, pods: any[]) {
   if (!system) return
 
   const t = thresholds
-
-  if (system.cpu.percent > t.cpu.crit) fire('cpu-crit', 'critical', `CPU at ${system.cpu.percent}%`)
-  else if (system.cpu.percent > t.cpu.warn) fire('cpu-warn', 'warning', `CPU at ${system.cpu.percent}%`)
-  else { resolve('cpu-crit'); resolve('cpu-warn') }
-
-  if (system.memory.percent > t.memory.crit) fire('mem-crit', 'critical', `Memory at ${system.memory.percent}%`)
-  else if (system.memory.percent > t.memory.warn) fire('mem-warn', 'warning', `Memory at ${system.memory.percent}%`)
-  else { resolve('mem-crit'); resolve('mem-warn') }
-
-  if (system.disk.percent > t.disk.crit) fire('disk-crit', 'critical', `Disk at ${system.disk.percent}%`)
-  else if (system.disk.percent > t.disk.warn) fire('disk-warn', 'warning', `Disk at ${system.disk.percent}%`)
-  else { resolve('disk-crit'); resolve('disk-warn') }
-
   const loadPct = system.cpu.cores > 0 ? (system.cpu.load15 / system.cpu.cores) * 100 : 0
-  if (loadPct > t.load.crit) fire('load-crit', 'critical', `Load ${system.cpu.load15} (${loadPct.toFixed(0)}% of ${system.cpu.cores} cores)`)
-  else if (loadPct > t.load.warn) fire('load-warn', 'warning', `Load ${system.cpu.load15} (${loadPct.toFixed(0)}% of ${system.cpu.cores} cores)`)
-  else { resolve('load-crit'); resolve('load-warn') }
 
-  if (system.swap.percent > t.swap.crit) fire('swap-crit', 'critical', `Swap at ${system.swap.percent}%`)
-  else if (system.swap.percent > t.swap.warn) fire('swap-warn', 'warning', `Swap at ${system.swap.percent}%`)
-  else { resolve('swap-crit'); resolve('swap-warn') }
+  levelCheck('cpu', system.cpu.percent, t.cpu, `CPU at ${system.cpu.percent}%`)
+  levelCheck('mem', system.memory.percent, t.memory, `Memory at ${system.memory.percent}%`)
+  levelCheck('disk', system.disk.percent, t.disk, `Disk at ${system.disk.percent}%`)
+  levelCheck('load', loadPct, t.load, `Load ${system.cpu.load15} (${loadPct.toFixed(0)}% of ${system.cpu.cores} cores)`)
+  levelCheck('swap', system.swap.percent, t.swap, `Swap at ${system.swap.percent}%`)
 
   if (pods?.length) {
     const notReady = pods.filter((p: any) => p.status !== 'Running' || !p.ready)
