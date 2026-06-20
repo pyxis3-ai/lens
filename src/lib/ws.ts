@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, type Ref } from 'vue'
 import type { SystemMetrics, Pod, SecuritySummary, ServiceHealth, NginxStats, Alert, NginxAttack, K8sEvent, Certificate, Node, AlertThresholds, LLMEndpoint } from './types'
 
 export const system = ref<SystemMetrics | null>(null)
@@ -63,13 +63,13 @@ export function postJson(url: string, body: unknown) {
   return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 }
 
-export async function loadSSH() {
-  try { sshAttacks.value = await fetchJson('/api/security/ssh') } catch (e) { console.error('[ws] loadSSH failed:', e) }
+async function load(target: Ref<any>, url: string) {
+  try { target.value = await fetchJson(url) } catch (e) { console.error(`[ws] ${url} failed:`, e) }
 }
 
-export async function loadAuthelia() {
-  try { autheliaStats.value = await fetchJson('/api/security/authelia') } catch (e) { console.error('[ws] loadAuthelia failed:', e) }
-}
+export const loadSSH = () => load(sshAttacks, '/api/security/ssh')
+export const loadAuthelia = () => load(autheliaStats, '/api/security/authelia')
+export const loadThresholds = () => load(alertThresholds, '/api/alerts/thresholds')
 
 export async function loadAttacks() {
   try {
@@ -93,39 +93,23 @@ export async function loadEvents() {
   } catch (e) { console.error('[ws] loadEvents failed:', e) }
 }
 
-export async function loadResources() {
-  try {
-    const [d, s, p, i, n, svc, ds, rs, cj, j, cm, sec] = await Promise.all([
-      fetchJson('/api/deployments'),
-      fetchJson('/api/statefulsets'),
-      fetchJson('/api/pvcs'),
-      fetchJson('/api/ingresses'),
-      fetchJson('/api/nodes'),
-      fetchJson('/api/services'),
-      fetchJson('/api/daemonsets'),
-      fetchJson('/api/replicasets'),
-      fetchJson('/api/cronjobs'),
-      fetchJson('/api/jobs'),
-      fetchJson('/api/configmaps'),
-      fetchJson('/api/secrets'),
-    ])
-    deployments.value = d
-    statefulsets.value = s
-    pvcs.value = p
-    ingresses.value = i
-    nodes.value = n
-    k8sServices.value = svc
-    daemonsets.value = ds
-    replicasets.value = rs
-    cronjobs.value = cj
-    jobs.value = j
-    configmaps.value = cm
-    secrets.value = sec
-  } catch (e) { console.error('[ws] loadResources failed:', e) }
-}
+const RESOURCE_SOURCES: [Ref<any[]>, string][] = [
+  [deployments, '/api/deployments'],
+  [statefulsets, '/api/statefulsets'],
+  [pvcs, '/api/pvcs'],
+  [ingresses, '/api/ingresses'],
+  [nodes, '/api/nodes'],
+  [k8sServices, '/api/services'],
+  [daemonsets, '/api/daemonsets'],
+  [replicasets, '/api/replicasets'],
+  [cronjobs, '/api/cronjobs'],
+  [jobs, '/api/jobs'],
+  [configmaps, '/api/configmaps'],
+  [secrets, '/api/secrets'],
+]
 
-export async function loadThresholds() {
-  try { alertThresholds.value = await fetchJson('/api/alerts/thresholds') } catch (e) { console.error('[ws] loadThresholds failed:', e) }
+export function loadResources() {
+  return Promise.all(RESOURCE_SOURCES.map(([target, url]) => load(target, url)))
 }
 
 export async function loadLLM(force = false) {

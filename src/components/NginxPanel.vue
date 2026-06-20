@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import type { NginxStats } from '../lib/types'
 import { httpStatusCategoryColor, formatBytes } from '../lib/formatters'
+import ExpandableList from './ExpandableList.vue'
 
 const props = defineProps<{ data: NginxStats | null }>()
-const showAllIPs = ref(false)
-const showAllHosts = ref(false)
-const showAllPaths = ref(false)
 
 const sortedHosts = computed(() => {
   if (!props.data) return []
@@ -35,25 +33,27 @@ const sortedHosts = computed(() => {
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
       <div class="bg-zinc-900/50 border border-zinc-800/50 rounded px-3 py-2">
-        <div class="flex items-center justify-between text-xs text-zinc-500 mb-1">
-          <span>TOP IPs ({{ data.topIPs.length }})</span>
-          <button v-if="data.topIPs.length > 8" @click="showAllIPs = !showAllIPs" class="text-zinc-600 hover:text-zinc-400">{{ showAllIPs ? 'less' : 'all' }}</button>
-        </div>
-        <div v-for="ip in (showAllIPs ? data.topIPs : data.topIPs.slice(0, 8))" :key="ip.ip" class="text-xs flex justify-between">
-          <span class="text-zinc-400 truncate">{{ ip.ip }}</span>
-          <span class="text-amber-400 ml-2">{{ ip.count }}</span>
-        </div>
+        <div class="text-xs text-zinc-500 mb-1">TOP IPs ({{ data.topIPs.length }})</div>
+        <ExpandableList :items="data.topIPs" :limit="8">
+          <template #default="{ item }">
+            <div class="text-xs flex justify-between">
+              <span class="text-zinc-400 truncate">{{ item.ip }}</span>
+              <span class="text-amber-400 ml-2">{{ item.count }}</span>
+            </div>
+          </template>
+        </ExpandableList>
       </div>
 
       <div class="bg-zinc-900/50 border border-zinc-800/50 rounded px-3 py-2">
-        <div class="flex items-center justify-between text-xs text-zinc-500 mb-1">
-          <span>HOSTS ({{ sortedHosts.length }})</span>
-          <button v-if="sortedHosts.length > 8" @click="showAllHosts = !showAllHosts" class="text-zinc-600 hover:text-zinc-400">{{ showAllHosts ? 'less' : 'all' }}</button>
-        </div>
-        <div v-for="[host, count] in (showAllHosts ? sortedHosts : sortedHosts.slice(0, 8))" :key="host" class="text-xs flex justify-between">
-          <span class="text-zinc-400 truncate">{{ host }}</span>
-          <span class="text-zinc-600 ml-2">{{ count }}</span>
-        </div>
+        <div class="text-xs text-zinc-500 mb-1">HOSTS ({{ sortedHosts.length }})</div>
+        <ExpandableList :items="sortedHosts" :limit="8">
+          <template #default="{ item: [host, count] }">
+            <div class="text-xs flex justify-between">
+              <span class="text-zinc-400 truncate">{{ host }}</span>
+              <span class="text-zinc-600 ml-2">{{ count }}</span>
+            </div>
+          </template>
+        </ExpandableList>
       </div>
 
       <div class="bg-zinc-900/50 border border-zinc-800/50 rounded px-3 py-2">
@@ -65,14 +65,15 @@ const sortedHosts = computed(() => {
       </div>
 
       <div class="bg-zinc-900/50 border border-zinc-800/50 rounded px-3 py-2">
-        <div class="flex items-center justify-between text-xs text-zinc-500 mb-1">
-          <span>PATHS ({{ data.topPaths.length }})</span>
-          <button v-if="data.topPaths.length > 8" @click="showAllPaths = !showAllPaths" class="text-zinc-600 hover:text-zinc-400">{{ showAllPaths ? 'less' : 'all' }}</button>
-        </div>
-        <div v-for="p in (showAllPaths ? data.topPaths : data.topPaths.slice(0, 8))" :key="p.uri" class="text-xs flex justify-between gap-2">
-          <span class="text-zinc-400 truncate" :title="p.uri">{{ p.uri }}</span>
-          <span class="text-zinc-600 shrink-0">{{ p.count }}</span>
-        </div>
+        <div class="text-xs text-zinc-500 mb-1">PATHS ({{ data.topPaths.length }})</div>
+        <ExpandableList :items="data.topPaths" :limit="8">
+          <template #default="{ item }">
+            <div class="text-xs flex justify-between gap-2">
+              <span class="text-zinc-400 truncate" :title="item.uri">{{ item.uri }}</span>
+              <span class="text-zinc-600 shrink-0">{{ item.count }}</span>
+            </div>
+          </template>
+        </ExpandableList>
       </div>
     </div>
   </div>

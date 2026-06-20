@@ -21,17 +21,14 @@ function broadcast(type: string, data: any) {
 
 interface Threshold { warn: number; crit: number }
 
-const defaults: Record<string, Threshold> = {
+const thresholds: Record<string, Threshold> = {
   cpu: { warn: 75, crit: 90 },
   memory: { warn: 85, crit: 95 },
   disk: { warn: 80, crit: 95 },
   swap: { warn: 50, crit: 80 },
   load: { warn: 200, crit: 400 },
 }
-
-const thresholds: Record<string, Threshold> = { ...defaults }
-const saved = store.getThresholds()
-for (const [id, t] of Object.entries(saved)) thresholds[id] = t
+for (const [id, t] of Object.entries(store.getThresholds())) thresholds[id] = t
 
 export function getThresholds() { return { ...thresholds } }
 
@@ -43,63 +40,41 @@ export function updateThreshold(id: string, warn: number, crit: number): { ok: b
 }
 
 const activeAlerts = new Map<string, Alert>()
-const alertHistory: Alert[] = []
 const acknowledgedIds = new Set<string>()
 
 function fire(id: string, level: 'warning' | 'critical', message: string) {
-  if (activeAlerts.has(id)) return
-  if (acknowledgedIds.has(id)) return
-  const alert: Alert = { id, level, message, ts: Date.now(), resolved: false, acknowledged: false }
-  activeAlerts.set(id, alert)
-  alertHistory.push(alert)
-  if (alertHistory.length > config.alertHistoryMax) alertHistory.shift()
-
+  if (activeAlerts.has(id) || acknowledgedIds.has(id)) return
+  activeAlerts.set(id, { id, level, message, ts: Date.now(), resolved: false, acknowledged: false })
   console.log(`[ALERT ${level.toUpperCase()}] ${message}`)
-  if (config.alertWebhook) sendWebhook(alert)
+  if (config.alertWebhook) sendWebhook(level, message)
 }
 
 function resolve(id: string) {
-  const alert = activeAlerts.get(id)
-  if (alert) {
-    alert.resolved = true
-    activeAlerts.delete(id)
-    acknowledgedIds.delete(id)
-    alertHistory.push({ ...alert, ts: Date.now(), resolved: true })
-    console.log(`[RESOLVED] ${alert.message}`)
-  }
+  if (activeAlerts.delete(id)) acknowledgedIds.delete(id)
 }
 
 export function acknowledgeAlert(id: string): { ok: boolean } {
   const alert = activeAlerts.get(id)
-  if (alert) {
-    alert.acknowledged = true
-    acknowledgedIds.add(id)
-    broadcast('alerts', getActiveAlerts())
-    return { ok: true }
-  }
-  return { ok: false }
+  if (!alert) return { ok: false }
+  alert.acknowledged = true
+  acknowledgedIds.add(id)
+  broadcast('alerts', getActiveAlerts())
+  return { ok: true }
 }
 
 export function dismissAlert(id: string): { ok: boolean } {
-  const alert = activeAlerts.get(id)
-  if (alert) {
-    activeAlerts.delete(id)
-    acknowledgedIds.add(id)
-    alertHistory.push({ ...alert, ts: Date.now(), resolved: true })
-    broadcast('alerts', getActiveAlerts())
-    return { ok: true }
-  }
-  return { ok: false }
+  if (!activeAlerts.delete(id)) return { ok: false }
+  acknowledgedIds.add(id)
+  broadcast('alerts', getActiveAlerts())
+  return { ok: true }
 }
 
-async function sendWebhook(alert: Alert) {
+async function sendWebhook(level: 'warning' | 'critical', message: string) {
   try {
     await fetch(config.alertWebhook, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        content: `**${alert.level === 'critical' ? '🔴' : '⚠️'} ${alert.level.toUpperCase()}**: ${alert.message}`,
-      }),
+      body: JSON.stringify({ content: `**${level === 'critical' ? '🔴' : '⚠️'} ${level.toUpperCase()}**: ${message}` }),
       signal: AbortSignal.timeout(config.webhookTimeout),
     })
   } catch (e) {
@@ -125,94 +100,73 @@ function evaluateAlerts(system: SystemMetrics, pods: any[]) {
   levelCheck('load', loadPct, t.load, `Load ${system.cpu.load15} (${loadPct.toFixed(0)}% of ${system.cpu.cores} cores)`)
   levelCheck('swap', system.swap.percent, t.swap, `Swap at ${system.swap.percent}%`)
 
-  if (pods?.length) {
-    const notReady = pods.filter((p: any) => p.status !== 'Running' || !p.ready)
-    if (notReady.length) fire('pods-notready', 'warning', `${notReady.length} pods not ready: ${notReady.map((p: any) => p.name).slice(0, 3).join(', ')}`)
-    else resolve('pods-notready')
+  if (!pods?.length) return
 
-    const oomPods = pods.filter((p: any) => p.lastTermination?.reason === 'OOMKilled' && !(p.status === 'Running' && p.ready))
-    if (oomPods.length) fire('pods-oom', 'critical', `OOMKilled: ${oomPods.map((p: any) => p.name).slice(0, 3).join(', ')}`)
-    else resolve('pods-oom')
+  const names = (list: any[]) => list.map(p => p.name).slice(0, 3).join(', ')
+  const notReady = pods.filter(p => p.status !== 'Running' || !p.ready)
+  if (notReady.length) fire('pods-notready', 'warning', `${notReady.length} pods not ready: ${names(notReady)}`)
+  else resolve('pods-notready')
 
-    const crashLoop = pods.filter((p: any) => p.restarts > config.crashLoopThreshold)
-    if (crashLoop.length) fire('pods-crash', 'warning', `Crash looping: ${crashLoop.map((p: any) => `${p.name}(${p.restarts})`).slice(0, 3).join(', ')}`)
-    else resolve('pods-crash')
+  const oomPods = pods.filter(p => p.lastTermination?.reason === 'OOMKilled' && !(p.status === 'Running' && p.ready))
+  if (oomPods.length) fire('pods-oom', 'critical', `OOMKilled: ${names(oomPods)}`)
+  else resolve('pods-oom')
 
-    const noLimits = pods.filter((p: any) => p.containers?.some((c: any) => !c.limits?.memory && !c.limits?.cpu))
-    if (noLimits.length > config.noLimitsThreshold) fire('pods-nolimits', 'warning', `${noLimits.length} pods without resource limits`)
-    else resolve('pods-nolimits')
-  }
+  const crashLoop = pods.filter(p => p.restarts > config.crashLoopThreshold)
+  if (crashLoop.length) fire('pods-crash', 'warning', `Crash looping: ${crashLoop.map(p => `${p.name}(${p.restarts})`).slice(0, 3).join(', ')}`)
+  else resolve('pods-crash')
+
+  const noLimits = pods.filter(p => p.containers?.some((c: any) => !c.limits?.memory && !c.limits?.cpu))
+  if (noLimits.length > config.noLimitsThreshold) fire('pods-nolimits', 'warning', `${noLimits.length} pods without resource limits`)
+  else resolve('pods-nolimits')
 }
 
 export function getActiveAlerts(): Alert[] {
   return [...activeAlerts.values()]
 }
 
-export function getAlertHistory(limit = 50): Alert[] {
-  return alertHistory.slice(-limit).reverse()
-}
-
 async function checkCertExpiry() {
-  try {
-    const certs = await k8s.certificates()
-    for (const cert of certs) {
-      if (!cert.notAfter) continue
-      const daysLeft = Math.floor((new Date(cert.notAfter).getTime() - Date.now()) / 86400_000)
-      if (daysLeft < config.certCritDays) fire(`cert-${cert.name}-crit`, 'critical', `Cert ${cert.name} expires in ${daysLeft}d`)
-      else if (daysLeft < config.certWarnDays) fire(`cert-${cert.name}-warn`, 'warning', `Cert ${cert.name} expires in ${daysLeft}d`)
-      else { resolve(`cert-${cert.name}-crit`); resolve(`cert-${cert.name}-warn`) }
-    }
-  } catch (e) { console.error('[monitoring] cert check error:', e) }
+  for (const cert of await k8s.certificates()) {
+    if (!cert.notAfter) continue
+    const daysLeft = Math.floor((new Date(cert.notAfter).getTime() - Date.now()) / 86400_000)
+    if (daysLeft < config.certCritDays) fire(`cert-${cert.name}-crit`, 'critical', `Cert ${cert.name} expires in ${daysLeft}d`)
+    else if (daysLeft < config.certWarnDays) fire(`cert-${cert.name}-warn`, 'warning', `Cert ${cert.name} expires in ${daysLeft}d`)
+    else { resolve(`cert-${cert.name}-crit`); resolve(`cert-${cert.name}-warn`) }
+  }
 }
 
-async function systemLoop() {
-  try { broadcast('system', await metrics.system()) } catch (e) { console.error('[monitoring] system:', e) }
-  setTimeout(systemLoop, config.systemInterval)
+function loop(interval: number, fn: () => Promise<unknown>, label: string) {
+  const tick = () => fn().catch(e => console.error(`[monitoring] ${label}:`, e)).finally(() => setTimeout(tick, interval))
+  tick()
 }
-systemLoop()
 
-async function podsLoop() {
-  try {
+let lastAttackTs = 0
+
+export function startMonitoring() {
+  loop(config.systemInterval, async () => broadcast('system', await metrics.system()), 'system')
+
+  loop(config.podsInterval, async () => {
     const [pods, sec, sys] = await Promise.all([k8s.pods(), security.summary(), metrics.system()])
     broadcast('pods', pods)
     broadcast('security', sec)
     evaluateAlerts(sys, pods)
     broadcast('alerts', getActiveAlerts())
-  } catch (e) { console.error('[monitoring] pods:', e) }
-  setTimeout(podsLoop, config.podsInterval)
-}
-podsLoop()
+  }, 'pods')
 
-checkCertExpiry()
-setTimeout(function certLoop() {
-  checkCertExpiry().finally(() => setTimeout(certLoop, config.certCheckInterval))
-}, config.certCheckInterval)
-
-async function healthLoop() {
-  try {
-    const [h, n] = await Promise.all([health.check(), nginx.analyze(300)])
+  loop(config.healthInterval, async () => {
+    const [h, n] = await Promise.all([health.check(), nginx.analyze()])
     broadcast('health', h)
     broadcast('nginx', n)
-  } catch (e) { console.error('[monitoring] health:', e) }
-  setTimeout(healthLoop, config.healthInterval)
-}
-healthLoop()
+  }, 'health')
 
-let lastAttackTs = 0
-async function attackLoop() {
-  try {
-    const data = await security.nginxAttacks(50)
-    const newAttacks = data.attacks.filter((a: any) => {
-      if (!a?.time) return false
+  loop(config.attackStoreInterval, async () => {
+    const { attacks } = await nginx.attacks(50)
+    const fresh = attacks.filter(a => {
       const ts = new Date(a.time).getTime()
       return !isNaN(ts) && ts > lastAttackTs
     })
-    for (const a of newAttacks) store.saveAttack(a)
-    if (newAttacks.length) {
-      const maxTs = Math.max(...newAttacks.map((a: any) => new Date(a.time).getTime()))
-      lastAttackTs = maxTs
-    }
-  } catch (e) { console.error('[monitoring] attacks:', e) }
-  setTimeout(attackLoop, config.attackStoreInterval)
+    for (const a of fresh) store.saveAttack(a)
+    if (fresh.length) lastAttackTs = Math.max(...fresh.map(a => new Date(a.time).getTime()))
+  }, 'attacks')
+
+  loop(config.certCheckInterval, checkCertExpiry, 'cert')
 }
-attackLoop()

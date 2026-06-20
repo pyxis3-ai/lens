@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import { sshAttacks, loadSSH } from '../lib/ws'
-
-const showAllIPs = ref(false)
-const showAllUsers = ref(false)
+import ExpandableList from './ExpandableList.vue'
 
 onMounted(loadSSH)
 </script>
@@ -20,22 +18,20 @@ onMounted(loadSSH)
         <button @click="loadSSH" class="text-zinc-600 hover:text-zinc-400 ml-auto">↻</button>
       </div>
       <div class="flex gap-2 text-xs flex-wrap items-center">
-        <span class="text-zinc-600">IPs ({{ sshAttacks.topIPs?.length }}):</span>
-        <span v-for="[ip, count] in (showAllIPs ? sshAttacks.topIPs : sshAttacks.topIPs?.slice(0, 5))" :key="ip" class="text-zinc-500">
-          {{ ip }} <span class="text-red-400">{{ count }}</span>
-        </span>
-        <button v-if="sshAttacks.topIPs?.length > 5" @click="showAllIPs = !showAllIPs" class="text-zinc-600 hover:text-zinc-400">
-          {{ showAllIPs ? 'less' : `+${sshAttacks.topIPs.length - 5}` }}
-        </button>
+        <span class="text-zinc-600">IPs ({{ sshAttacks.topIPs.length }}):</span>
+        <ExpandableList :items="sshAttacks.topIPs" :limit="5">
+          <template #default="{ item: [ip, count] }">
+            <span class="text-zinc-500">{{ ip }} <span class="text-red-400">{{ count }}</span></span>
+          </template>
+        </ExpandableList>
       </div>
       <div class="flex gap-2 text-xs flex-wrap mt-1 items-center">
-        <span class="text-zinc-600">users ({{ sshAttacks.topUsers?.length }}):</span>
-        <span v-for="[user, count] in (showAllUsers ? sshAttacks.topUsers : sshAttacks.topUsers?.slice(0, 8))" :key="user" class="text-zinc-500">
-          <span :class="user === 'root' ? 'text-red-400' : 'text-amber-400'">{{ user }}</span> <span class="text-zinc-600">{{ count }}</span>
-        </span>
-        <button v-if="sshAttacks.topUsers?.length > 8" @click="showAllUsers = !showAllUsers" class="text-zinc-600 hover:text-zinc-400">
-          {{ showAllUsers ? 'less' : `+${sshAttacks.topUsers.length - 8}` }}
-        </button>
+        <span class="text-zinc-600">users ({{ sshAttacks.topUsers.length }}):</span>
+        <ExpandableList :items="sshAttacks.topUsers" :limit="8">
+          <template #default="{ item: [user, count] }">
+            <span class="text-zinc-500"><span :class="user === 'root' ? 'text-red-400' : 'text-amber-400'">{{ user }}</span> <span class="text-zinc-600">{{ count }}</span></span>
+          </template>
+        </ExpandableList>
       </div>
     </div>
 

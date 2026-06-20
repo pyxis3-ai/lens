@@ -6,7 +6,7 @@ import { namespaceFilter, postJson } from '../lib/ws'
 import LogViewer from './LogViewer.vue'
 import ExecTerminal from './ExecTerminal.vue'
 
-const props = defineProps<{ pods: Pod[]; compact?: boolean; focusedIndex?: number }>()
+const props = defineProps<{ pods: Pod[]; focusedIndex?: number }>()
 const filter = ref('')
 const expandedPod = ref<string | null>(null)
 const selectedPod = ref<string | null>(null)
@@ -117,8 +117,7 @@ const sorted = computed(() => {
   return list
 })
 
-const display = computed(() => props.compact ? sorted.value.slice(0, 20) : sorted.value)
-const colCount = computed(() => props.compact ? 12 : 13)
+const colCount = 13
 
 function isFocused(idx: number): boolean { return props.focusedIndex === idx }
 
@@ -131,7 +130,7 @@ watch(() => props.focusedIndex, async (idx) => {
 function onKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape' && selectedPod.value) { selectedPod.value = null; e.stopPropagation(); return }
   if (e.key === 'x' && props.focusedIndex !== undefined && props.focusedIndex >= 0) {
-    const pod = display.value[props.focusedIndex]
+    const pod = sorted.value[props.focusedIndex]
     if (pod) { const key = podKey(pod); expandedPod.value = expandedPod.value === key ? null : key }
     return
   }
@@ -169,11 +168,11 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
             <th class="text-right px-2 py-1">%R</th>
             <th class="text-left px-2 py-1">IP</th>
             <th class="text-right px-2 py-1">AGE</th>
-            <th v-if="!compact" class="text-right px-2 py-1">ACT</th>
+            <th class="text-right px-2 py-1">ACT</th>
           </tr>
         </thead>
         <tbody>
-          <template v-for="(pod, idx) in display" :key="podKey(pod)">
+          <template v-for="(pod, idx) in sorted" :key="podKey(pod)">
             <tr @click="selectRow(pod)" data-pod-row
               class="border-b border-zinc-800/30 cursor-pointer transition-colors"
               :class="[
@@ -199,7 +198,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
               <td class="px-2 py-0.5 text-right" :class="pctColor(pctOfReq(pod, 'mem'))">{{ pctOfReq(pod, 'mem') }}</td>
               <td class="px-2 py-0.5 text-zinc-600">{{ pod.ip }}</td>
               <td class="px-2 py-0.5 text-right text-zinc-600">{{ timeAgo(pod.age) }}</td>
-              <td v-if="!compact" class="px-2 py-0.5 text-right">
+              <td class="px-2 py-0.5 text-right">
                 <button @click.stop="deletePod(pod)" class="text-zinc-600 hover:text-red-400 mr-1" title="Delete">✕</button>
                 <button @click.stop="restartDeploy(pod)" class="text-zinc-600 hover:text-amber-400" title="Restart">↻</button>
               </td>

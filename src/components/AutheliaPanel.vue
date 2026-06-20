@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { autheliaStats, loadAuthelia } from '../lib/ws'
+import ExpandableList from './ExpandableList.vue'
 
-const showAllHosts = ref(false)
 onMounted(loadAuthelia)
 
 const sortedHosts = computed(() => {
@@ -23,14 +23,13 @@ const sortedHosts = computed(() => {
       </div>
 
       <div v-if="sortedHosts.length" class="text-xs">
-        <div class="flex items-center gap-2 mb-0.5">
-          <span class="text-zinc-600">blocked by host:</span>
-          <button v-if="sortedHosts.length > 8" @click="showAllHosts = !showAllHosts" class="text-zinc-600 hover:text-zinc-400">{{ showAllHosts ? 'less' : 'all' }}</button>
-        </div>
+        <div class="mb-0.5"><span class="text-zinc-600">blocked by host:</span></div>
         <div class="flex flex-wrap gap-2">
-          <span v-for="[host, count] in (showAllHosts ? sortedHosts : sortedHosts.slice(0, 8))" :key="host" class="text-zinc-500">
-            {{ host }} <span class="text-amber-400">{{ count }}</span>
-          </span>
+          <ExpandableList :items="sortedHosts" :limit="8">
+            <template #default="{ item: [host, count] }">
+              <span class="text-zinc-500">{{ host }} <span class="text-amber-400">{{ count }}</span></span>
+            </template>
+          </ExpandableList>
         </div>
       </div>
     </div>

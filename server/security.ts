@@ -133,23 +133,4 @@ export const security = {
 
     return { requests, blocked, byHost, recent: recent.slice(-20).reverse() }
   },
-
-  async nginxAttacks(limit = 100) {
-    const pods = await k8s.podsByLabel(config.nginxNamespace, config.nginxLabel)
-    if (!pods.length) return { attacks: [], attackCount: 0 }
-
-    const lines = await k8s.podLogs(config.nginxNamespace, pods[0], undefined, limit * 2)
-    const attacks = lines
-      .filter(l => l.includes('"status":'))
-      .map(l => {
-        try {
-          const j = JSON.parse(l)
-          if (j.status >= 400) return { time: j.time, ip: j.remote, method: j.method, uri: j.uri, status: j.status, host: j.host, ua: j.ua }
-        } catch {}
-        return null
-      })
-      .filter((a): a is NonNullable<typeof a> => a !== null)
-      .slice(-limit)
-    return { attacks, attackCount: attacks.length }
-  },
 }

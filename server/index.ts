@@ -1,12 +1,10 @@
 import { resolve } from 'path'
 import { config } from './config'
 import { k8s, k8sGet } from './k8s'
-import { metrics } from './metrics'
 import { security } from './security'
-import { health } from './health'
 import { nginx } from './nginx'
 import { store } from './db'
-import { addClient, removeClient, getActiveAlerts, getAlertHistory, acknowledgeAlert, dismissAlert, getThresholds, updateThreshold } from './monitoring'
+import { addClient, removeClient, acknowledgeAlert, dismissAlert, getThresholds, updateThreshold, startMonitoring } from './monitoring'
 import { startExec, execMessage, stopExec } from './exec'
 import { llm } from './llm'
 
@@ -17,10 +15,6 @@ function clampInt(val: string | null, fallback: number, min: number, max: number
 
 const GET_ROUTES: Record<string, () => unknown> = {
   '/api/health': () => ({ status: 'ok' }),
-  '/api/system': () => metrics.system(),
-  '/api/pods': () => k8s.pods(),
-  '/api/namespaces': () => k8s.namespaces(),
-  '/api/nodes': () => k8s.nodes(),
   '/api/pvcs': () => k8s.pvcs(),
   '/api/deployments': () => k8s.deployments(),
   '/api/statefulsets': () => k8s.statefulsets(),
@@ -33,16 +27,25 @@ const GET_ROUTES: Record<string, () => unknown> = {
   '/api/configmaps': () => k8s.configmaps(),
   '/api/secrets': () => k8s.secrets(),
   '/api/certificates': () => k8s.certificates(),
-  '/api/security': () => security.summary(),
-  '/api/security/fail2ban': () => security.fail2ban(),
+  '/api/nodes': () => k8s.nodes(),
   '/api/security/ssh': () => security.sshAttacks(),
   '/api/security/authelia': () => security.authelia(),
-  '/api/security/attacks': () => store.getAttacks(200),
   '/api/security/stats': () => store.getAttackStats(),
-  '/api/health/services': () => health.check(),
-  '/api/alerts': () => getActiveAlerts(),
-  '/api/alerts/history': () => getAlertHistory(50),
   '/api/alerts/thresholds': () => getThresholds(),
+}
+
+const DESCRIBE_PATHS: Record<string, (ns: string, name: string) => string> = {
+  pod: (ns, n) => `/api/v1/namespaces/${ns}/pods/${n}`,
+  deployment: (ns, n) => `/apis/apps/v1/namespaces/${ns}/deployments/${n}`,
+  statefulset: (ns, n) => `/apis/apps/v1/namespaces/${ns}/statefulsets/${n}`,
+  daemonset: (ns, n) => `/apis/apps/v1/namespaces/${ns}/daemonsets/${n}`,
+  service: (ns, n) => `/api/v1/namespaces/${ns}/services/${n}`,
+  configmap: (ns, n) => `/api/v1/namespaces/${ns}/configmaps/${n}`,
+  secret: (ns, n) => `/api/v1/namespaces/${ns}/secrets/${n}`,
+  pvc: (ns, n) => `/api/v1/namespaces/${ns}/persistentvolumeclaims/${n}`,
+  ingress: (ns, n) => `/apis/networking.k8s.io/v1/namespaces/${ns}/ingresses/${n}`,
+  cronjob: (ns, n) => `/apis/batch/v1/namespaces/${ns}/cronjobs/${n}`,
+  job: (ns, n) => `/apis/batch/v1/namespaces/${ns}/jobs/${n}`,
 }
 
 const server = Bun.serve({
@@ -70,10 +73,6 @@ const server = Bun.serve({
     }
 
     if (req.method === 'GET') {
-      if (path === '/api/user') {
-        const name = req.headers.get('Remote-Name') || req.headers.get('Remote-User') || ''
-        return Response.json({ name, email: req.headers.get('Remote-Email') || '', initial: name.charAt(0).toUpperCase() || '?' })
-      }
       if (path === '/api/logs') {
         const ns = q.get('namespace') || '', pod = q.get('pod') || ''
         if (!ns || !pod) return Response.json({ lines: [], error: 'namespace and pod required' })
@@ -81,26 +80,12 @@ const server = Bun.serve({
         return Response.json({ namespace: ns, pod, lines })
       }
       if (path === '/api/events') return Response.json(await k8s.events(clampInt(q.get('limit'), 50, 1, 200)))
-      if (path === '/api/security/nginx') return Response.json(await security.nginxAttacks(clampInt(q.get('lines'), 50, 1, 500)))
-      if (path === '/api/nginx') return Response.json(await nginx.analyze(clampInt(q.get('lines'), 300, 1, 1000)))
+      if (path === '/api/security/nginx') return Response.json(await nginx.attacks(clampInt(q.get('lines'), 100, 1, 500)))
       if (path === '/api/llm') return Response.json(await llm.endpoints(q.get('force') === '1'))
       if (path === '/api/describe') {
-        const ens = encodeURIComponent(q.get('namespace') || ''), ename = encodeURIComponent(q.get('name') || '')
-        const paths: Record<string, string> = {
-          pod: `/api/v1/namespaces/${ens}/pods/${ename}`,
-          deployment: `/apis/apps/v1/namespaces/${ens}/deployments/${ename}`,
-          statefulset: `/apis/apps/v1/namespaces/${ens}/statefulsets/${ename}`,
-          daemonset: `/apis/apps/v1/namespaces/${ens}/daemonsets/${ename}`,
-          service: `/api/v1/namespaces/${ens}/services/${ename}`,
-          configmap: `/api/v1/namespaces/${ens}/configmaps/${ename}`,
-          secret: `/api/v1/namespaces/${ens}/secrets/${ename}`,
-          pvc: `/api/v1/namespaces/${ens}/persistentvolumeclaims/${ename}`,
-          ingress: `/apis/networking.k8s.io/v1/namespaces/${ens}/ingresses/${ename}`,
-          cronjob: `/apis/batch/v1/namespaces/${ens}/cronjobs/${ename}`,
-          job: `/apis/batch/v1/namespaces/${ens}/jobs/${ename}`,
-        }
-        const p = paths[q.get('kind') || '']
-        return p ? Response.json(await k8sGet(p)) : Response.json({ error: 'unknown kind' }, { status: 400 })
+        const build = DESCRIBE_PATHS[q.get('kind') || '']
+        if (!build) return Response.json({ error: 'unknown kind' }, { status: 400 })
+        return Response.json(await k8sGet(build(encodeURIComponent(q.get('namespace') || ''), encodeURIComponent(q.get('name') || ''))))
       }
       const producer = GET_ROUTES[path]
       if (producer) return Response.json(await producer())
@@ -111,8 +96,8 @@ const server = Bun.serve({
       try { body = await req.json() } catch { return Response.json({ ok: false, error: 'Invalid JSON' }, { status: 400 }) }
       const { namespace, name, id } = body
       const hasNsName = typeof namespace === 'string' && !!namespace && typeof name === 'string' && !!name
-      const bad = (error = 'invalid params') => Response.json({ ok: false, error }, { status: 400 })
       const hasId = typeof id === 'string' && !!id
+      const bad = (error = 'invalid params') => Response.json({ ok: false, error }, { status: 400 })
 
       if (path === '/api/pod/delete') return hasNsName ? Response.json(await k8s.deletePod(namespace, name)) : bad()
       if (path === '/api/deployment/restart') return hasNsName ? Response.json(await k8s.restartDeployment(namespace, name)) : bad()
@@ -122,10 +107,10 @@ const server = Bun.serve({
         if (isNaN(r) || r < 0 || r > config.maxReplicas) return bad(`replicas must be 0-${config.maxReplicas}`)
         return Response.json(await k8s.scaleDeployment(namespace, name, r))
       }
-      if (path === '/api/alerts/ack') return hasId ? Response.json(acknowledgeAlert(id)) : Response.json({ ok: false }, { status: 400 })
-      if (path === '/api/alerts/dismiss') return hasId ? Response.json(dismissAlert(id)) : Response.json({ ok: false }, { status: 400 })
+      if (path === '/api/alerts/ack') return hasId ? Response.json(acknowledgeAlert(id)) : bad()
+      if (path === '/api/alerts/dismiss') return hasId ? Response.json(dismissAlert(id)) : bad()
       if (path === '/api/alerts/thresholds') {
-        if (!hasId) return Response.json({ ok: false }, { status: 400 })
+        if (!hasId) return bad()
         const clamp = (v: any) => Math.max(0, Math.min(100, parseFloat(v) || 0))
         return Response.json(updateThreshold(id, clamp(body.warn), clamp(body.crit)))
       }
@@ -156,4 +141,5 @@ const server = Bun.serve({
   },
 })
 
+startMonitoring()
 console.log(`Lens server running on http://localhost:${server.port}`)
