@@ -22,6 +22,8 @@ LLM endpoint discovery · pod &amp; workload browser · in-browser `kubectl exec
 
 </div>
 
+<p align="center"><img src="assets/dashboard.png" alt="lens — LLM endpoint discovery: runtime, model list, and probe latency for every inference Service, with a live system bar and workload tabs" width="860" /></p>
+
 ---
 
 Read-only views over your serving cluster's resources, GPU pressure visibility, and an in-browser `kubectl exec` terminal — all served from a single Bun process running inside the cluster. Built for the operational pattern of running open-source LLM inference on Kubernetes (vLLM, TGI, llama.cpp, Ollama): inspect inference pods, tail accelerator-bound workloads, and exec into a model server without leaving the browser.
