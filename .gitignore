@@ -1,7 +1,5 @@
 node_modules/
+dist/
 *.db
 *.log
 .DS_Store
-bun.lock
-dist/
-node_modules/

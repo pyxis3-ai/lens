@@ -2,9 +2,9 @@
 import { ref } from 'vue'
 import { attacks, attackStats, loadAttacks } from '../lib/ws'
 import { httpStatusColor } from '../lib/formatters'
+import ExpandableList from './ExpandableList.vue'
 
 const expandedRow = ref(-1)
-const showAllIPs = ref(false)
 </script>
 
 <template>
@@ -18,12 +18,11 @@ const showAllIPs = ref(false)
 
     <div v-if="attackStats?.topIPs?.length" class="flex gap-3 mb-2 text-xs flex-wrap items-center">
       <span class="text-zinc-600">top:</span>
-      <span v-for="t in (showAllIPs ? attackStats.topIPs : attackStats.topIPs.slice(0, 5))" :key="t.ip" class="text-zinc-500">
-        {{ t.ip }} <span class="text-red-400">{{ t.c }}</span>
-      </span>
-      <button v-if="attackStats.topIPs.length > 5" @click="showAllIPs = !showAllIPs" class="text-zinc-600 hover:text-zinc-400">
-        {{ showAllIPs ? 'less' : `+${attackStats.topIPs.length - 5}` }}
-      </button>
+      <ExpandableList :items="attackStats.topIPs" :limit="5">
+        <template #default="{ item }">
+          <span class="text-zinc-500">{{ item.ip }} <span class="text-red-400">{{ item.c }}</span></span>
+        </template>
+      </ExpandableList>
     </div>
 
     <div v-if="attacks.length" class="overflow-x-auto">

@@ -1,4 +1,5 @@
 import { k8sGet } from './k8s'
+import { memo } from './cache'
 import type { LLMEndpoint } from '../src/lib/types'
 
 const DEFAULT_PORTS = [8000, 3000, 8080, 5000, 11434, 8888, 8081, 4000]
@@ -145,37 +146,32 @@ async function probe(c: PortCandidate): Promise<LLMEndpoint | null> {
   }
 }
 
-let cache: { at: number; data: LLMEndpoint[] } | null = null
-const CACHE_TTL_MS = 30_000
+const scan = memo<LLMEndpoint[]>(30_000, async () => {
+  const candidates = await listServiceCandidates()
+
+  const BATCH = 16
+  const results: LLMEndpoint[] = []
+  for (let i = 0; i < candidates.length; i += BATCH) {
+    const settled = await Promise.all(candidates.slice(i, i + BATCH).map(probe))
+    for (const r of settled) if (r) results.push(r)
+  }
+
+  const byKey = new Map<string, LLMEndpoint>()
+  for (const r of results) {
+    const key = `${r.namespace}/${[...r.models].sort().join(',')}`
+    const prev = byKey.get(key)
+    if (!prev || r.latencyMs < prev.latencyMs) byKey.set(key, r)
+  }
+
+  return [...byKey.values()].sort((a, b) =>
+    a.namespace === b.namespace
+      ? a.service.localeCompare(b.service)
+      : a.namespace.localeCompare(b.namespace),
+  )
+})
 
 export const llm = {
-  async endpoints(force = false): Promise<LLMEndpoint[]> {
-    if (!force && cache && (Date.now() - cache.at) < CACHE_TTL_MS) {
-      return cache.data
-    }
-    const candidates = await listServiceCandidates()
-
-    const BATCH = 16
-    const results: LLMEndpoint[] = []
-    for (let i = 0; i < candidates.length; i += BATCH) {
-      const slice = candidates.slice(i, i + BATCH)
-      const settled = await Promise.all(slice.map(probe))
-      for (const r of settled) if (r) results.push(r)
-    }
-
-    const byKey = new Map<string, LLMEndpoint>()
-    for (const r of results) {
-      const key = `${r.namespace}/${[...r.models].sort().join(',')}`
-      const prev = byKey.get(key)
-      if (!prev || r.latencyMs < prev.latencyMs) byKey.set(key, r)
-    }
-
-    const data = [...byKey.values()].sort((a, b) =>
-      a.namespace === b.namespace
-        ? a.service.localeCompare(b.service)
-        : a.namespace.localeCompare(b.namespace),
-    )
-    cache = { at: Date.now(), data }
-    return data
+  endpoints(force = false): Promise<LLMEndpoint[]> {
+    return scan(force)
   },
 }

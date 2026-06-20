@@ -1,13 +1,8 @@
 import { k8s } from './k8s'
 import { config } from './config'
 
-let _cache: any[] = []
-let _lastCheck = 0
-
 export const health = {
   async check() {
-    if (Date.now() - _lastCheck < config.healthInterval && _cache.length) return _cache
-
     const ingresses = await k8s.ingresses()
     const hosts = new Map<string, { namespace: string; path: string }>()
 
@@ -30,31 +25,13 @@ export const health = {
             signal: AbortSignal.timeout(config.healthTimeout),
             tls: { rejectUnauthorized: false },
           })
-          const latency = Math.round(performance.now() - start)
-          return {
-            name: host.split('.')[0],
-            host,
-            namespace,
-            status: res.status,
-            ok: res.status < 500,
-            latency,
-          }
+          return { name: host.split('.')[0], host, namespace, status: res.status, ok: res.status < 500, latency: Math.round(performance.now() - start) }
         } catch (e: any) {
-          return {
-            name: host.split('.')[0],
-            host,
-            namespace,
-            status: 0,
-            ok: false,
-            latency: Math.round(performance.now() - start),
-            error: e.message?.slice(0, 80),
-          }
+          return { name: host.split('.')[0], host, namespace, status: 0, ok: false, latency: Math.round(performance.now() - start), error: e.message?.slice(0, 80) }
         }
       })
     )
 
-    _cache = results.sort((a, b) => a.host.localeCompare(b.host))
-    _lastCheck = Date.now()
-    return _cache
+    return results.sort((a, b) => a.host.localeCompare(b.host))
   },
 }

@@ -76,7 +76,7 @@ export const metrics = {
     const swapFree = parseInt(meminfo.match(/SwapFree:\s+(\d+)/)?.[1] || '0') * 1024
 
     const { percent: cpuPercent, perCore } = parseCpuUsage(stat)
-    const cpuCount = perCore.length || (stat.match(/^cpu\d+/gm) || []).length
+    const cpuCount = perCore.length
     const loads = loadavg.split(' ')
     const processes = parseInt(loads[3]?.split('/')[1] || '0')
     const connections = netstat.split('\n').filter(l => l.trim() && !l.includes('local_address')).length

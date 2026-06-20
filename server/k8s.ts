@@ -1,22 +1,18 @@
 import { readFile } from 'fs/promises'
 import { config } from './config'
+import { memo } from './cache'
 
 const API = config.k8sApi
-const TOKEN_PATH = config.k8sTokenPath
 
-let _token = ''
-let _tokenTime = 0
+const readToken = memo(config.tokenCacheTTL, async () => (await readFile(config.k8sTokenPath, 'utf-8')).trim())
 
 export async function k8sGetToken(): Promise<string> {
-  if (_token && Date.now() - _tokenTime < config.tokenCacheTTL) return _token
   try {
-    _token = (await readFile(TOKEN_PATH, 'utf-8')).trim()
-    _tokenTime = Date.now()
+    return await readToken()
   } catch (e) {
     console.error('[k8s] Failed to read SA token:', (e as Error).message)
-    _token = ''
+    return ''
   }
-  return _token
 }
 
 export async function k8sGet(path: string): Promise<any> {
@@ -179,10 +175,6 @@ export const k8s = {
 
   podsByLabel(namespace: string, label: string): Promise<string[]> {
     return list(`/api/v1/namespaces/${encodeURIComponent(namespace)}/pods?labelSelector=${encodeURIComponent(label)}`, (p: any) => p.metadata.name)
-  },
-
-  namespaces() {
-    return list('/api/v1/namespaces', (n: any) => ({ name: n.metadata.name, status: n.status.phase, age: n.metadata.creationTimestamp }))
   },
 
   async nodes() {
