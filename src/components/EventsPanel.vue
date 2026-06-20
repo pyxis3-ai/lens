@@ -19,7 +19,7 @@ const expandedEvent = ref(-1)
 <template>
   <div>
     <div class="flex items-center gap-1 mb-2">
-      <button v-for="t in (['events', 'certs'] as EventView[])" :key="t"
+      <button v-for="t in EVENT_VIEWS" :key="t"
         @click="active = t"
         :class="active === t ? 'bg-zinc-700 text-zinc-200' : 'text-zinc-500 hover:bg-zinc-800'"
         class="px-2 py-0.5 text-xs rounded transition-colors">
