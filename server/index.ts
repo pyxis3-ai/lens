@@ -34,18 +34,11 @@ const GET_ROUTES: Record<string, () => unknown> = {
   '/api/alerts/thresholds': () => getThresholds(),
 }
 
-const DESCRIBE_PATHS: Record<string, (ns: string, name: string) => string> = {
-  pod: (ns, n) => `/api/v1/namespaces/${ns}/pods/${n}`,
-  deployment: (ns, n) => `/apis/apps/v1/namespaces/${ns}/deployments/${n}`,
-  statefulset: (ns, n) => `/apis/apps/v1/namespaces/${ns}/statefulsets/${n}`,
-  daemonset: (ns, n) => `/apis/apps/v1/namespaces/${ns}/daemonsets/${n}`,
-  service: (ns, n) => `/api/v1/namespaces/${ns}/services/${n}`,
-  configmap: (ns, n) => `/api/v1/namespaces/${ns}/configmaps/${n}`,
-  secret: (ns, n) => `/api/v1/namespaces/${ns}/secrets/${n}`,
-  pvc: (ns, n) => `/api/v1/namespaces/${ns}/persistentvolumeclaims/${n}`,
-  ingress: (ns, n) => `/apis/networking.k8s.io/v1/namespaces/${ns}/ingresses/${n}`,
-  cronjob: (ns, n) => `/apis/batch/v1/namespaces/${ns}/cronjobs/${n}`,
-  job: (ns, n) => `/apis/batch/v1/namespaces/${ns}/jobs/${n}`,
+const DESCRIBE_KINDS: Record<string, [string, string]> = {
+  pod: ['', 'pods'], deployment: ['apps', 'deployments'], statefulset: ['apps', 'statefulsets'],
+  daemonset: ['apps', 'daemonsets'], service: ['', 'services'], configmap: ['', 'configmaps'],
+  secret: ['', 'secrets'], pvc: ['', 'persistentvolumeclaims'], ingress: ['networking.k8s.io', 'ingresses'],
+  cronjob: ['batch', 'cronjobs'], job: ['batch', 'jobs'],
 }
 
 const server = Bun.serve({
@@ -83,9 +76,10 @@ const server = Bun.serve({
       if (path === '/api/security/nginx') return Response.json(await nginx.attacks(clampInt(q.get('lines'), 100, 1, 500)))
       if (path === '/api/llm') return Response.json(await llm.endpoints(q.get('force') === '1'))
       if (path === '/api/describe') {
-        const build = DESCRIBE_PATHS[q.get('kind') || '']
-        if (!build) return Response.json({ error: 'unknown kind' }, { status: 400 })
-        return Response.json(await k8sGet(build(encodeURIComponent(q.get('namespace') || ''), encodeURIComponent(q.get('name') || ''))))
+        const kind = DESCRIBE_KINDS[q.get('kind') || '']
+        if (!kind) return Response.json({ error: 'unknown kind' }, { status: 400 })
+        const base = kind[0] ? `/apis/${kind[0]}/v1` : '/api/v1'
+        return Response.json(await k8sGet(`${base}/namespaces/${encodeURIComponent(q.get('namespace') || '')}/${kind[1]}/${encodeURIComponent(q.get('name') || '')}`))
       }
       const producer = GET_ROUTES[path]
       if (producer) return Response.json(await producer())

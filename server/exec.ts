@@ -66,28 +66,21 @@ export async function startExec(clientWs: any) {
 
 export function execMessage(clientWs: any, msg: string | Buffer) {
   const k8sWs = sessions.get(clientWs)
-  if (!k8sWs || k8sWs.readyState !== WebSocket.OPEN) return
+  if (!k8sWs || k8sWs.readyState !== WebSocket.OPEN || typeof msg !== 'string') return
 
-  if (typeof msg === 'string') {
-    try {
-      const parsed = JSON.parse(msg)
-      if (parsed.type === 'resize') {
-        const resizePayload = JSON.stringify({ Width: parsed.cols, Height: parsed.rows })
-        const encoded = encoder.encode(resizePayload)
-        const buf = new Uint8Array(1 + encoded.length)
-        buf[0] = CH_RESIZE
-        buf.set(encoded, 1)
-        k8sWs.send(buf)
-        return
-      }
-    } catch {}
-
-    const encoded = encoder.encode(msg)
-    const buf = new Uint8Array(1 + encoded.length)
-    buf[0] = CH_STDIN
-    buf.set(encoded, 1)
+  const frame = (ch: number, s: string) => {
+    const e = encoder.encode(s)
+    const buf = new Uint8Array(1 + e.length)
+    buf[0] = ch
+    buf.set(e, 1)
     k8sWs.send(buf)
   }
+
+  try {
+    const p = JSON.parse(msg)
+    if (p.type === 'resize') return frame(CH_RESIZE, JSON.stringify({ Width: p.cols, Height: p.rows }))
+  } catch {}
+  frame(CH_STDIN, msg)
 }
 
 export function stopExec(clientWs: any) {

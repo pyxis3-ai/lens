@@ -67,13 +67,10 @@ export const metrics = {
       readProc(`${PROC}/net/tcp`),
     ])
 
-    const memTotal = parseInt(meminfo.match(/MemTotal:\s+(\d+)/)?.[1] || '0') * 1024
-    const memAvail = parseInt(meminfo.match(/MemAvailable:\s+(\d+)/)?.[1] || '0') * 1024
-    const memUsed = memTotal - memAvail
-    const buffers = parseInt(meminfo.match(/Buffers:\s+(\d+)/)?.[1] || '0') * 1024
-    const cached = parseInt(meminfo.match(/Cached:\s+(\d+)/)?.[1] || '0') * 1024
-    const swapTotal = parseInt(meminfo.match(/SwapTotal:\s+(\d+)/)?.[1] || '0') * 1024
-    const swapFree = parseInt(meminfo.match(/SwapFree:\s+(\d+)/)?.[1] || '0') * 1024
+    const mem = (k: string) => parseInt(meminfo.match(new RegExp(`${k}:\\s+(\\d+)`))?.[1] || '0') * 1024
+    const memTotal = mem('MemTotal'), memAvail = mem('MemAvailable'), memUsed = memTotal - memAvail
+    const buffers = mem('Buffers'), cached = mem('Cached')
+    const swapTotal = mem('SwapTotal'), swapFree = mem('SwapFree')
 
     const { percent: cpuPercent, perCore } = parseCpuUsage(stat)
     const cpuCount = perCore.length

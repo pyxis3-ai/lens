@@ -6,11 +6,24 @@ const DEFAULT_PORTS = [8000, 3000, 8080, 5000, 11434, 8888, 8081, 4000]
 
 const PROBE_TIMEOUT_MS = 1500
 
-const INFERENCE_IMAGE_HINTS = [
-  /vllm/i, /text-generation-inference/i, /tgi/i, /llama[._-]?cpp/i,
-  /ollama/i, /sglang/i, /triton/i, /lorax/i, /huggingface/i, /infinity/i,
-  /openai/i, /mistral/i, /llm/i, /inference/i, /embed/i,
+const RUNTIME_PATTERNS: [RegExp, string][] = [
+  [/vllm/i, 'vllm'],
+  [/text-generation-inference|tgi/i, 'tgi'],
+  [/llama[._ -]?cpp|llama-?server/i, 'llama.cpp'],
+  [/ollama/i, 'ollama'],
+  [/sglang/i, 'sglang'],
+  [/triton/i, 'triton'],
+  [/infinity/i, 'infinity'],
 ]
+
+const OWNED_BY: Record<string, string> = {
+  vllm: 'vllm', llamacpp: 'llama.cpp', 'llama.cpp': 'llama.cpp',
+  tgi: 'tgi', huggingface: 'tgi', ollama: 'ollama', sglang: 'sglang',
+}
+
+const matchRuntime = (s: string) => RUNTIME_PATTERNS.find(([rx]) => rx.test(s))?.[1]
+const isInferenceImage = (img?: string) =>
+  !!img && (!!matchRuntime(img) || /lorax|huggingface|openai|mistral|llm|inference|embed/i.test(img))
 
 interface PortCandidate {
   namespace: string
@@ -61,43 +74,16 @@ async function listServiceCandidates(): Promise<PortCandidate[]> {
     }
   }
 
-  out.sort((a, b) => {
-    const aHit = a.image && INFERENCE_IMAGE_HINTS.some(rx => rx.test(a.image!))
-    const bHit = b.image && INFERENCE_IMAGE_HINTS.some(rx => rx.test(b.image!))
-    if (aHit && !bHit) return -1
-    if (bHit && !aHit) return 1
-    return 0
-  })
-
-  return out
+  return out.sort((a, b) => Number(isInferenceImage(b.image)) - Number(isInferenceImage(a.image)))
 }
 
 function detectRuntime(modelsJson: any, headers: Headers, image?: string): string {
   const ownedBy = String(modelsJson?.data?.[0]?.owned_by ?? '').toLowerCase()
-  if (ownedBy === 'vllm') return 'vllm'
-  if (ownedBy === 'llamacpp' || ownedBy === 'llama.cpp') return 'llama.cpp'
-  if (ownedBy === 'tgi' || ownedBy === 'huggingface') return 'tgi'
-  if (ownedBy === 'ollama') return 'ollama'
-  if (ownedBy === 'sglang') return 'sglang'
-
-  const server = headers.get('server') || ''
-  if (/vllm/i.test(server)) return 'vllm'
-  if (/text-generation-inference/i.test(server) || /TGI/.test(server)) return 'tgi'
-  if (/ollama/i.test(server)) return 'ollama'
-  if (/llama[. _-]?cpp/i.test(server) || /llama-server/i.test(server)) return 'llama.cpp'
-
-  if (image) {
-    if (/vllm/i.test(image)) return 'vllm'
-    if (/text-generation-inference|tgi/i.test(image)) return 'tgi'
-    if (/llama[._ -]?cpp/i.test(image) || /llama-?server/i.test(image)) return 'llama.cpp'
-    if (/ollama/i.test(image)) return 'ollama'
-    if (/sglang/i.test(image)) return 'sglang'
-    if (/triton/i.test(image)) return 'triton'
-    if (/infinity/i.test(image)) return 'infinity'
-  }
-
-  if (Array.isArray(modelsJson?.models) && !Array.isArray(modelsJson?.data)) return 'ollama'
-  return 'openai-compat'
+  const ollamaShape = Array.isArray(modelsJson?.models) && !Array.isArray(modelsJson?.data)
+  return OWNED_BY[ownedBy]
+    || matchRuntime(headers.get('server') || '')
+    || (image ? matchRuntime(image) : undefined)
+    || (ollamaShape ? 'ollama' : 'openai-compat')
 }
 
 async function probe(c: PortCandidate): Promise<LLMEndpoint | null> {

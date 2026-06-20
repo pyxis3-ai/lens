@@ -69,6 +69,8 @@ function parseMem(v: string): number {
 
 const list = async (path: string, shape: (item: any) => any): Promise<any[]> => ((await k8sGet(path))?.items || []).map(shape)
 
+const meta = (x: any) => ({ namespace: x.metadata.namespace, name: x.metadata.name, age: x.metadata.creationTimestamp })
+
 export const k8s = {
 
   async pods() {
@@ -127,15 +129,13 @@ export const k8s = {
       const totalCount = (p.spec.containers || []).length
 
       return {
-        namespace: p.metadata.namespace,
-        name: p.metadata.name,
+        ...meta(p),
         status: p.status.phase,
         ready: readyCount === totalCount && totalCount > 0,
         readyCount,
         totalCount,
         restarts: statuses.reduce((s: number, c: any) => s + (c.restartCount || 0), 0),
         containers,
-        age: p.metadata.creationTimestamp,
         node: p.spec.nodeName,
         ip: p.status.podIP || '',
         qos: p.status.qosClass || '',
@@ -249,44 +249,40 @@ export const k8s = {
 
   ingresses() {
     return list('/apis/networking.k8s.io/v1/ingresses', (i: any) => ({
-      name: i.metadata.name, namespace: i.metadata.namespace,
+      ...meta(i),
       class: i.spec?.ingressClassName || i.metadata.annotations?.['kubernetes.io/ingress.class'] || '',
       hosts: i.spec?.rules?.map((r: any) => r.host).filter(Boolean) || [],
       healthPath: i.metadata.annotations?.['lens.pyxis3.ai/health-path'] || '/',
       address: i.status?.loadBalancer?.ingress?.[0]?.ip || '',
       tls: !!i.spec?.tls?.length,
-      age: i.metadata.creationTimestamp,
     }))
   },
 
   pvcs() {
     return list('/api/v1/persistentvolumeclaims', (p: any) => ({
-      namespace: p.metadata.namespace, name: p.metadata.name, status: p.status.phase,
+      ...meta(p), status: p.status.phase,
       volume: p.spec.volumeName || '',
       capacity: p.status.capacity?.storage || p.spec.resources?.requests?.storage || '?',
       storageClass: p.spec.storageClassName, accessModes: p.spec.accessModes,
-      age: p.metadata.creationTimestamp,
     }))
   },
 
   services() {
     return list('/api/v1/services', (s: any) => ({
-      namespace: s.metadata.namespace, name: s.metadata.name,
+      ...meta(s),
       type: s.spec.type,
       clusterIP: s.spec.clusterIP,
       externalIP: s.status?.loadBalancer?.ingress?.[0]?.ip || s.spec.externalIPs?.[0] || '',
       ports: (s.spec.ports || []).map((p: any) => `${p.port}${p.nodePort ? ':' + p.nodePort : ''}/${p.protocol}`).join(', '),
-      age: s.metadata.creationTimestamp,
     }))
   },
 
   deployments() {
     return list('/apis/apps/v1/deployments', (d: any) => ({
-      namespace: d.metadata.namespace, name: d.metadata.name, replicas: d.spec.replicas,
+      ...meta(d), replicas: d.spec.replicas,
       ready: d.status.readyReplicas || 0,
       upToDate: d.status.updatedReplicas || 0,
       available: d.status.availableReplicas || 0,
-      age: d.metadata.creationTimestamp,
       image: d.spec.template.spec.containers?.[0]?.image || '',
       conditions: (d.status.conditions || []).map((c: any) => ({ type: c.type, status: c.status })),
     }))
@@ -294,73 +290,66 @@ export const k8s = {
 
   statefulsets() {
     return list('/apis/apps/v1/statefulsets', (s: any) => ({
-      namespace: s.metadata.namespace, name: s.metadata.name, replicas: s.spec.replicas,
+      ...meta(s), replicas: s.spec.replicas,
       ready: s.status.readyReplicas || 0,
-      age: s.metadata.creationTimestamp,
       image: s.spec.template.spec.containers?.[0]?.image || '',
     }))
   },
 
   daemonsets() {
     return list('/apis/apps/v1/daemonsets', (d: any) => ({
-      namespace: d.metadata.namespace, name: d.metadata.name,
+      ...meta(d),
       desired: d.status.desiredNumberScheduled || 0,
       ready: d.status.numberReady || 0,
       upToDate: d.status.updatedNumberScheduled || 0,
       available: d.status.numberAvailable || 0,
-      age: d.metadata.creationTimestamp,
       image: d.spec.template.spec.containers?.[0]?.image || '',
     }))
   },
 
   replicasets() {
     return list('/apis/apps/v1/replicasets', (r: any) => ({
-      namespace: r.metadata.namespace, name: r.metadata.name,
+      ...meta(r),
       desired: r.spec.replicas ?? 0,
       ready: r.status.readyReplicas || 0,
       available: r.status.availableReplicas || 0,
-      age: r.metadata.creationTimestamp,
       owner: r.metadata.ownerReferences?.[0]?.name || '',
     }))
   },
 
   cronjobs() {
     return list('/apis/batch/v1/cronjobs', (c: any) => ({
-      namespace: c.metadata.namespace, name: c.metadata.name,
+      ...meta(c),
       schedule: c.spec.schedule,
       suspend: c.spec.suspend ?? false,
       active: c.status.active?.length || 0,
       lastSchedule: c.status.lastScheduleTime,
-      age: c.metadata.creationTimestamp,
     }))
   },
 
   jobs() {
     return list('/apis/batch/v1/jobs', (j: any) => ({
-      namespace: j.metadata.namespace, name: j.metadata.name,
+      ...meta(j),
       completions: `${j.status.succeeded || 0}/${j.spec.completions || 1}`,
       duration: j.status.startTime && j.status.completionTime
         ? Math.round((new Date(j.status.completionTime).getTime() - new Date(j.status.startTime).getTime()) / 1000)
         : null,
       status: j.status.conditions?.[0]?.type || (j.status.active ? 'Running' : 'Unknown'),
-      age: j.metadata.creationTimestamp,
     }))
   },
 
   configmaps() {
     return list('/api/v1/configmaps', (c: any) => ({
-      namespace: c.metadata.namespace, name: c.metadata.name,
+      ...meta(c),
       keys: Object.keys(c.data || {}).length,
-      age: c.metadata.creationTimestamp,
     }))
   },
 
   secrets() {
     return list('/api/v1/secrets', (s: any) => ({
-      namespace: s.metadata.namespace, name: s.metadata.name,
+      ...meta(s),
       type: s.type,
       keys: Object.keys(s.data || {}).length,
-      age: s.metadata.creationTimestamp,
     }))
   },
 
