@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>lens — AI/LLM observability for Kubernetes</title>
+<meta name="description" content="Lightweight in-cluster observability for LLM and AI/ML serving on Kubernetes. Inspect vLLM/TGI/llama.cpp inference pods, browse resources, and kubectl exec in-browser — from a single Bun process." />
+<meta property="og:title" content="lens — AI/LLM observability for Kubernetes" />
+<meta property="og:description" content="Inspect inference pods, browse cluster resources, and exec into model servers from the browser. Single Bun binary, in-cluster SA-token auth." />
+<meta property="og:type" content="website" />
+<style>
+  :root {
+    --bg: #09090b;
+    --panel: rgba(24, 24, 27, 0.4);
+    --border: #27272a;
+    --text: #d4d4d8;
+    --bright: #fafafa;
+    --muted: #71717a;
+    --accent: #34d399;
+    --accent-dim: #10b981;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: var(--bright); }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 24px; }
+  .hero { padding: 96px 0 56px; text-align: center; }
+  .logo {
+    font-size: clamp(40px, 9vw, 72px); font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--bright);
+  }
+  .logo .dot { color: var(--accent); }
+  .tag { margin-top: 16px; font-size: clamp(15px, 2.4vw, 19px); color: var(--text); }
+  .sub { margin-top: 10px; color: var(--muted); font-size: 14px; }
+  .cta { margin-top: 32px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px; border-radius: 6px; font-size: 14px; transition: all .15s;
+    border: 1px solid var(--border);
+  }
+  .btn.primary { background: var(--accent-dim); color: #04140d; border-color: var(--accent-dim); font-weight: 600; }
+  .btn.primary:hover { background: var(--accent); color: #04140d; }
+  .btn.ghost { color: var(--text); }
+  .btn.ghost:hover { border-color: var(--muted); color: var(--bright); }
+  section { padding: 40px 0; border-top: 1px solid var(--border); }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--muted); margin-bottom: 24px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 18px; }
+  .card h3 { font-size: 14px; color: var(--bright); margin-bottom: 6px; }
+  .card h3 .mk { color: var(--accent); margin-right: 8px; }
+  .card p { font-size: 13px; color: var(--muted); }
+  .prose p { color: var(--text); font-size: 14px; max-width: 70ch; }
+  .prose p + p { margin-top: 14px; }
+  pre {
+    background: #0c0c0e; border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 18px; overflow-x: auto; font-size: 13px; color: var(--text);
+  }
+  pre .c { color: var(--muted); }
+  pre .g { color: var(--accent); }
+  .arch { font-size: 12px; line-height: 1.5; color: var(--muted); white-space: pre; }
+  footer { padding: 40px 0 64px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <div class="logo">lens<span class="dot">.</span></div>
+      <p class="tag">Lightweight in-cluster observability for LLM and AI/ML serving on Kubernetes.</p>
+      <p class="sub">Inspect inference pods, tail accelerator-bound workloads, and <code>kubectl exec</code> into a model server — without leaving the browser. One Bun process, in-cluster service-account auth.</p>
+      <div class="cta">
+        <a class="btn primary" href="https://lens.pyxis3.ai/?utm_source=githubpages&utm_medium=landing&utm_campaign=lens" target="_blank" rel="noopener">Live demo →</a>
+        <a class="btn ghost" href="https://github.com/pyxis3-ai/lens" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </header>
+
+    <section>
+      <h2>What it does</h2>
+      <div class="grid">
+        <div class="card"><h3><span class="mk">◆</span>LLM endpoint discovery</h3><p>Scans every cluster Service on its declared TCP ports for an OpenAI-compatible <code>/v1/models</code> response. Auto-detects vLLM, TGI, llama.cpp, Ollama, sglang, Triton — model list, probe latency, inferred runtime. No tokens spent.</p></div>
+        <div class="card"><h3><span class="mk">◆</span>Pod &amp; workload browser</h3><p>Namespaces, pods, deployments, services, configmaps, events — built to surface the inference layer and per-tenant quotas.</p></div>
+        <div class="card"><h3><span class="mk">◆</span>In-browser kubectl exec</h3><p>A real shell on any pod via xterm.js over WebSocket. Inspect model weights or attach to a running vLLM process.</p></div>
+        <div class="card"><h3><span class="mk">◆</span>Resource pressure</h3><p>Per-namespace CPU/memory pressure, surfaced for multi-tenant serving where one heavy workload can starve neighbours.</p></div>
+        <div class="card"><h3><span class="mk">◆</span>Security panel</h3><p>Failed-auth events from collected log streams — useful when fronting LLM endpoints with <code>auth_request</code>.</p></div>
+        <div class="card"><h3><span class="mk">◆</span>Single-binary scope</h3><p>Vue 3 + Vite frontend, Bun TypeScript backend. No Electron download, no separate auth proxy.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Why this exists</h2>
+      <div class="prose">
+        <p>The big Kubernetes dashboards are general-purpose and heavy. AI/ML serving has different debugging needs: inference pods are large and slow to start, and you need to know <em>exactly</em> which one is in <code>ContainerCreating</code> versus actually serving traffic.</p>
+        <p><code>kubectl exec</code> is the fastest way to confirm a vLLM/TGI process is healthy without exporting <code>/metrics</code> for every diagnostic. Multi-tenant serving leans on ResourceQuotas and KEDA — you want pressure visible per namespace, not just per node.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Run locally</h2>
+      <pre><span class="c"># requires Bun and access to a Kubernetes cluster (kind / k3d / k0s)</span>
+bun install
+bun run dev       <span class="c"># frontend</span>
+bun run server    <span class="c"># backend</span></pre>
+    </section>
+
+    <section>
+      <h2>Architecture</h2>
+      <div class="arch">  Vue 3 SPA  ──HTTPS/WS──▶  Bun server (TS)  ──K8s API──▶  control plane
+  xterm.js   ◀──────────   • REST proxy
+                           • exec WS bridge
+                           • SA-token rotation</div>
+      <p class="prose" style="margin-top:18px"><span style="color:var(--muted);font-size:13px">The server reads its bearer token from the standard service-account mount and proxies authenticated calls to the API server — no external secrets store needed.</span></p>
+    </section>
+
+    <footer>
+      <span>Open-source AI/LLM-infrastructure tooling by <a href="https://pyxis3.ai/?utm_source=githubpages&utm_medium=landing&utm_campaign=lens" target="_blank" rel="noopener">PYXIS3</a>.</span>
+      <span><a href="https://github.com/pyxis3-ai/lens">Source</a> · MIT License</span>
+    </footer>
+  </div>
+</body>
+</html>

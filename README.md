@@ -1,10 +1,32 @@
+<div align="center">
+
 # lens
 
-**Lightweight in-cluster observability for LLM and AI/ML serving on Kubernetes.** Read-only views over your serving cluster's resources, GPU pressure visibility, and an in-browser `kubectl exec` terminal — all served from a single Bun process running inside the cluster.
+**Lightweight in-cluster observability for LLM &amp; AI/ML serving on Kubernetes.**
 
-Built for the operational pattern of running open-source LLM inference on Kubernetes: open-source inference runtimes (vLLM, TGI, llama.cpp, Ollama), where you need a fast way to inspect inference pods, tail accelerator-bound workloads, and exec into a model server without leaving the browser.
+LLM endpoint discovery · pod &amp; workload browser · in-browser `kubectl exec` · per-namespace resource pressure · security panel
 
-**Demo: [lens.pyxis3.ai](https://lens.pyxis3.ai)** — gated by Authelia one-factor auth (exec gives shell access to the live cluster, so login is required).
+[![Website](https://img.shields.io/badge/lens.pyxis3.ai-10b981?style=flat-square&logo=googlechrome&logoColor=white)](https://lens.pyxis3.ai/?utm_source=github&utm_medium=readme&utm_campaign=lens)
+[![Overview](https://img.shields.io/badge/overview-635bff?style=flat-square&logo=githubpages&logoColor=white)](https://pyxis3-ai.github.io/lens/?utm_source=github&utm_medium=readme&utm_campaign=lens)
+[![License: MIT](https://img.shields.io/badge/License-MIT-3da639?style=flat-square)](LICENSE)
+[![Bun](https://img.shields.io/badge/Bun-14151a?logo=bun&logoColor=fbf0df&style=flat-square)](https://bun.sh)
+[![Vue 3](https://img.shields.io/badge/Vue%203-4FC08D?logo=vuedotjs&logoColor=fff&style=flat-square)](https://vuejs.org)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?logo=kubernetes&logoColor=fff&style=flat-square)](https://kubernetes.io)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff&style=flat-square)](https://www.typescriptlang.org)
+
+<sub>
+
+[**What it does**](#what-it-does) · [**Why**](#why-this-exists) · [**Architecture**](#architecture) · [**Run locally**](#run-locally) · [**In cluster**](#run-in-cluster) · [**Where it fits**](#where-it-fits)
+
+</sub>
+
+</div>
+
+---
+
+Read-only views over your serving cluster's resources, GPU pressure visibility, and an in-browser `kubectl exec` terminal — all served from a single Bun process running inside the cluster. Built for the operational pattern of running open-source LLM inference on Kubernetes (vLLM, TGI, llama.cpp, Ollama): inspect inference pods, tail accelerator-bound workloads, and exec into a model server without leaving the browser.
+
+**Demo — [lens.pyxis3.ai](https://lens.pyxis3.ai/?utm_source=github&utm_medium=readme&utm_campaign=lens)** · login required (the live cluster gates every app behind [shortlink](https://shortlink.pyxis3.ai/?utm_source=github&utm_medium=readme&utm_campaign=lens) forward-auth — one-factor, staff/admins; exec gives shell access to the live cluster). **Overview — [pyxis3-ai.github.io/lens](https://pyxis3-ai.github.io/lens/?utm_source=github&utm_medium=readme&utm_campaign=lens)**.
 
 ## What it does
 
@@ -62,7 +84,7 @@ docker build -t lens:dev .
 
 ## Where it fits
 
-Open-source AI-/LLM-infrastructure tooling published by [PYXIS3](https://pyxis3.ai). lens is an observability layer for an LLM-serving Kubernetes cluster running vLLM / TGI / llama.cpp / Ollama side by side.
+Open-source AI-/LLM-infrastructure tooling published by [PYXIS3](https://pyxis3.ai/?utm_source=github&utm_medium=readme&utm_campaign=lens). lens is an observability layer for an LLM-serving Kubernetes cluster running vLLM / TGI / llama.cpp / Ollama side by side.
 
 ## Status
 
