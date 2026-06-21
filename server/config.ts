@@ -7,8 +7,6 @@ export const config = {
   nginxLabel: process.env.NGINX_LABEL || 'app=nginx-ingress',
   nginxNamespace: process.env.NGINX_NAMESPACE || 'nginx-ingress',
   alertWebhook: process.env.ALERT_WEBHOOK || '',
-  autheliaNamespace: process.env.AUTHELIA_NAMESPACE || 'authelia',
-  autheliaLabel: process.env.AUTHELIA_LABEL || 'app.kubernetes.io/component=authelia',
   crashLoopThreshold: 5,
   noLimitsThreshold: 5,
   certWarnDays: 14,

@@ -12,7 +12,6 @@ import HealthPanel from './components/HealthPanel.vue'
 import NginxPanel from './components/NginxPanel.vue'
 import AttackLog from './components/AttackLog.vue'
 import SSHPanel from './components/SSHPanel.vue'
-import AutheliaPanel from './components/AutheliaPanel.vue'
 import AlertBar from './components/AlertBar.vue'
 import ResourcesPanel from './components/ResourcesPanel.vue'
 import NodeBar from './components/NodeBar.vue'
@@ -26,8 +25,8 @@ const SECTIONS: Section[] = ['resources', 'security', 'events']
 const selectedSection = ref<Section>('resources')
 const focusedPodIndex = ref(-1)
 
-type SecurityView = 'fail2ban' | 'traffic' | 'attacks' | 'ssh' | 'auth'
-const SECURITY_VIEWS: SecurityView[] = ['fail2ban', 'traffic', 'attacks', 'ssh', 'auth']
+type SecurityView = 'fail2ban' | 'traffic' | 'attacks' | 'ssh'
+const SECURITY_VIEWS: SecurityView[] = ['fail2ban', 'traffic', 'attacks', 'ssh']
 const securityView = ref<SecurityView>('fail2ban')
 
 const resourcesRef = ref<any>(null)
@@ -185,7 +184,6 @@ onUnmounted(() => {
         <NginxPanel v-else-if="securityView === 'traffic'" :data="nginxStats" />
         <AttackLog v-else-if="securityView === 'attacks'" />
         <SSHPanel v-else-if="securityView === 'ssh'" />
-        <AutheliaPanel v-else-if="securityView === 'auth'" />
       </template>
 
       <EventsPanel v-else-if="selectedSection === 'events'" ref="eventsRef" />

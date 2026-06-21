@@ -29,7 +29,6 @@ const GET_ROUTES: Record<string, () => unknown> = {
   '/api/certificates': () => k8s.certificates(),
   '/api/nodes': () => k8s.nodes(),
   '/api/security/ssh': () => security.sshAttacks(),
-  '/api/security/authelia': () => security.authelia(),
   '/api/security/stats': () => store.getAttackStats(),
   '/api/alerts/thresholds': () => getThresholds(),
 }
