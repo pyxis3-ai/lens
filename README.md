@@ -34,8 +34,9 @@ Read-only views over your serving cluster's resources, GPU pressure visibility, 
 
 - **LLM / inference endpoint discovery** — scans every cluster `Service` on its declared TCP ports for an OpenAI-compatible `/v1/models` response. Auto-detects vLLM, TGI, llama.cpp, Ollama, sglang, Triton — reports model list, probe latency, and inferred runtime, refreshed every 30s. No outbound traffic, no tokens spent. *This is the headline view for an LLM-serving cluster.*
 - **Pod & workload browser** — namespaces, pods, deployments, services, configmaps, events. Built to surface the inference layer (vLLM/TGI/llama.cpp pods, KEDA scalers, ResourceQuotas per tenant).
+- **Workload actions** — restart or scale a Deployment, or delete a stuck Pod, from the browser. **Gated behind RBAC**: the default ClusterRole is read-only, so these are no-ops until you grant write access.
 - **In-browser `kubectl exec`** — open a real shell on any pod via `xterm.js` over WebSocket. Critical for AI/ML serving where you need to inspect model weights, tokenizer state, or attach to a running vLLM process.
-- **Resource pressure** — per-namespace CPU/memory pressure, surfaced for multi-tenant serving where one heavy inference workload can starve neighbours.
+- **Resource pressure & alerts** — node CPU / memory / load / disk read straight from the host `/proc`, plus per-namespace allocation against requests/limits and `ResourceQuotas` — **no metrics-server required** (so no per-pod live usage or GPU utilization; GPU is shown by request/allocation). Configurable per-namespace thresholds raise alerts you can acknowledge or dismiss, streamed live over WebSocket.
 - **Security panel** — failed-auth events from collected log streams; helps when fronting LLM endpoints with `auth_request`.
 - Vue 3 + Vite frontend; Bun TypeScript backend.
 
@@ -90,4 +91,4 @@ Open-source AI-/LLM-infrastructure tooling published by [PYXIS3](https://pyxis3.
 
 ## Status
 
-Single-developer project, used in production on the PYXIS3 homelab cluster. Read-only by default; exec is gated behind RBAC.
+Single-developer project, used in production on the PYXIS3 homelab cluster. Read-only by default; `exec` and all write actions (scale / restart / delete) are gated behind RBAC.
