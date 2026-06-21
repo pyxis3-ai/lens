@@ -99,38 +99,4 @@ export const security = {
       return { total: 0, recent: [], topIPs: [], topUsers: [] }
     }
   },
-
-  async authelia() {
-    const pods = await k8s.podsByLabel(config.autheliaNamespace, config.autheliaLabel)
-    if (!pods.length) return { requests: 0, blocked: 0, byHost: {} as Record<string, number>, recent: [] as { time: string; host: string; user: string; status: number; method: string }[] }
-
-    const lines = await k8s.podLogs('authelia', pods[0], undefined, 200)
-    let requests = 0, blocked = 0
-    const byHost: Record<string, number> = {}
-    const recent: { time: string; host: string; user: string; status: number; method: string }[] = []
-
-    for (const line of lines) {
-      if (!line.includes('"method"')) continue
-      try {
-        const j = JSON.parse(line)
-        if (!j.path?.includes('/api/authz/')) continue
-        requests++
-        const hostMatch = j.msg?.match(/https?:\/\/([^\s/]+)/)
-        const host = hostMatch?.[1] || ''
-        const user = j.msg?.match(/user\s+(\S+)/)?.[1] || '<anonymous>'
-        const status = j.msg?.includes('status code 401') ? 401 : j.msg?.includes('status code 403') ? 403 : 200
-
-        if (status >= 400) {
-          blocked++
-          if (host) bump(byHost, host)
-        }
-
-        if (user !== '<anonymous>') {
-          recent.push({ time: j.time || '', host, user, status, method: j.method || '' })
-        }
-      } catch { continue }
-    }
-
-    return { requests, blocked, byHost, recent: recent.slice(-20).reverse() }
-  },
 }

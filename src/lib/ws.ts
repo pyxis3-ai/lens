@@ -25,7 +25,6 @@ export const jobs = ref<any[]>([])
 export const configmaps = ref<any[]>([])
 export const secrets = ref<any[]>([])
 export const sshAttacks = ref<{ total: number; invalidUsers: number; failedPasswords: number; probes: number; recent: { time: string; ip: string; user: string; type: string }[]; topIPs: [string, number][]; topUsers: [string, number][] } | null>(null)
-export const autheliaStats = ref<{ requests: number; blocked: number; byHost: Record<string, number>; recent: { time: string; host: string; user: string; status: number; method: string }[] } | null>(null)
 export const namespaceFilter = ref<string>('')
 export const nodes = ref<Node[]>([])
 export const alertThresholds = ref<AlertThresholds>({})
@@ -68,7 +67,6 @@ async function load(target: Ref<any>, url: string) {
 }
 
 export const loadSSH = () => load(sshAttacks, '/api/security/ssh')
-export const loadAuthelia = () => load(autheliaStats, '/api/security/authelia')
 export const loadThresholds = () => load(alertThresholds, '/api/alerts/thresholds')
 
 export async function loadAttacks() {
