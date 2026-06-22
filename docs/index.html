@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>lens — see what's serving your models · AI/LLM observability for Kubernetes</title>
-<meta name="description" content="In-cluster observability for LLM and AI/ML serving on Kubernetes. Discover every OpenAI-compatible inference endpoint, browse pods and workloads, watch per-namespace pressure, and kubectl exec into a model server — from the browser, from a single Bun binary." />
-<meta property="og:title" content="lens — see what's serving your models" />
+<title>lens - see what's serving your models · AI/LLM observability for Kubernetes</title>
+<meta name="description" content="In-cluster observability for LLM and AI/ML serving on Kubernetes. Discover every OpenAI-compatible inference endpoint, browse pods and workloads, watch per-namespace pressure, and kubectl exec into a model server - from the browser, from a single Bun binary." />
+<meta property="og:title" content="lens - see what's serving your models" />
 <meta property="og:description" content="AI/LLM observability for Kubernetes: endpoint discovery, workload browser, in-browser kubectl exec, resource pressure, alerts. Single Bun binary, in-cluster SA-token auth." />
 <meta property="og:type" content="website" />
 <style>
@@ -111,7 +111,7 @@
   <header class="hero">
     <div class="logo">lens<span class="dot">.</span></div>
     <h1 class="headline">See what's <em>actually serving</em> your models.</h1>
-    <p class="lede">In-cluster observability for LLM &amp; AI/ML serving on Kubernetes — discover every OpenAI-compatible endpoint, browse pods and workloads, watch per-namespace pressure, and <code>kubectl exec</code> into a model server, right from the browser.</p>
+    <p class="lede">In-cluster observability for LLM &amp; AI/ML serving on Kubernetes - discover every OpenAI-compatible endpoint, browse pods and workloads, watch per-namespace pressure, and <code>kubectl exec</code> into a model server, right from the browser.</p>
     <div class="cta">
       <a class="btn primary" href="https://app.lens.pyxis3.ai/?utm_source=githubpages&utm_medium=landing&utm_campaign=lens" target="_blank" rel="noopener">Live demo →</a>
       <a class="btn ghost" href="https://github.com/pyxis3-ai/lens" target="_blank" rel="noopener">GitHub</a>
@@ -150,35 +150,35 @@
   <section>
     <h2><span class="n">01</span>What it does</h2>
     <div class="grid">
-      <div class="card"><h3><span class="mk">◆</span>LLM endpoint discovery</h3><p>Probes every cluster Service on its declared TCP ports for an OpenAI-compatible <code>/v1/models</code> response. Auto-detects vLLM, TGI, llama.cpp, Ollama, sglang, Triton — model list, probe latency, inferred runtime. No tokens spent.</p></div>
-      <div class="card"><h3><span class="mk">◆</span>Pod &amp; workload browser</h3><p>Pods, deployments, statefulsets, services, configmaps, secrets, PVCs, ingresses, jobs, cronjobs, events, certificates — a fast keyboard-driven table for the whole cluster.</p></div>
-      <div class="card"><h3><span class="mk">◆</span>In-browser kubectl exec</h3><p>A real shell on any container via xterm.js over WebSocket. Inspect model weights, tokenizer state, or attach to a running vLLM process — no terminal, no kubeconfig.</p></div>
+      <div class="card"><h3><span class="mk">◆</span>LLM endpoint discovery</h3><p>Probes every cluster Service on its declared TCP ports for an OpenAI-compatible <code>/v1/models</code> response. Auto-detects vLLM, TGI, llama.cpp, Ollama, sglang, Triton - model list, probe latency, inferred runtime. No tokens spent.</p></div>
+      <div class="card"><h3><span class="mk">◆</span>Pod &amp; workload browser</h3><p>Pods, deployments, statefulsets, services, configmaps, secrets, PVCs, ingresses, jobs, cronjobs, events, certificates - a fast keyboard-driven table for the whole cluster.</p></div>
+      <div class="card"><h3><span class="mk">◆</span>In-browser kubectl exec</h3><p>A real shell on any container via xterm.js over WebSocket. Inspect model weights, tokenizer state, or attach to a running vLLM process - no terminal, no kubeconfig.</p></div>
       <div class="card"><h3><span class="mk">◆</span>Resource pressure</h3><p>Live per-node and per-pod CPU/memory from the metrics API, surfaced for multi-tenant serving where one heavy workload can starve its neighbours.</p></div>
-      <div class="card"><h3><span class="mk">◆</span>Alerts &amp; thresholds</h3><p>Editable CPU/memory/disk/swap/load thresholds, OOMKill and crash-loop detection, plus cert-expiry warnings — pushed live over WebSocket with optional webhook.</p></div>
-      <div class="card"><h3><span class="mk">◆</span>Security panel</h3><p>fail2ban jails, SSH brute-force, nginx WAF/ModSecurity blocks, and Authelia auth events from collected log streams — useful when fronting LLM endpoints.</p></div>
+      <div class="card"><h3><span class="mk">◆</span>Alerts &amp; thresholds</h3><p>Editable CPU/memory/disk/swap/load thresholds, OOMKill and crash-loop detection, plus cert-expiry warnings - pushed live over WebSocket with optional webhook.</p></div>
+      <div class="card"><h3><span class="mk">◆</span>Security panel</h3><p>fail2ban jails, SSH brute-force, nginx WAF/ModSecurity blocks, and Authelia auth events from collected log streams - useful when fronting LLM endpoints.</p></div>
     </div>
   </section>
 
   <section>
     <h2><span class="n">02</span>A closer look</h2>
     <div class="look">
-      <div class="row"><div class="lbl">Discovery</div><div><h3>Every endpoint, auto-detected.</h3><p>lens enumerates every Service, ranks candidates by container-image heuristics, and probes <code>/v1/models</code> in batches with a 1.5 s timeout. Runtime is read from <code>data[0].owned_by</code>, then the <code>Server</code> header, then the image. Only the model-list endpoint is hit — never a completion — so discovery costs zero tokens.</p></div></div>
+      <div class="row"><div class="lbl">Discovery</div><div><h3>Every endpoint, auto-detected.</h3><p>lens enumerates every Service, ranks candidates by container-image heuristics, and probes <code>/v1/models</code> in batches with a 1.5 s timeout. Runtime is read from <code>data[0].owned_by</code>, then the <code>Server</code> header, then the image. Only the model-list endpoint is hit - never a completion - so discovery costs zero tokens.</p></div></div>
       <div class="row"><div class="lbl">Exec</div><div><h3>A real shell, in the browser.</h3><p>Open <code>/bin/sh</code> on any container over the Kubernetes exec WebSocket, bridged through xterm.js with full TTY and live resize. The fastest way to confirm a vLLM/TGI process is healthy without exporting <code>/metrics</code> for every diagnostic.</p></div></div>
-      <div class="row"><div class="lbl">Workloads</div><div><h3>The whole cluster, one keystroke away.</h3><p>Tab through pods, deployments, statefulsets, daemonsets, services, configmaps, secrets, PVCs, ingresses, jobs and cronjobs. <code>⌘K</code> spotlight, <code>j/k</code> navigation, inline describe, scale and rolling-restart — built for keyboard speed.</p></div></div>
-      <div class="row"><div class="lbl">Pressure</div><div><h3>Per-namespace, not just per-node.</h3><p>Multi-tenant LLM serving leans on ResourceQuotas and KEDA. lens surfaces CPU/memory pressure where it matters — per namespace and per pod — so you can see which tenant is starving the others before it pages you.</p></div></div>
-      <div class="row"><div class="lbl">Security</div><div><h3>Failed-auth at a glance.</h3><p>Live counts and top offenders across fail2ban jails, SSH brute-force attempts, nginx WAF blocks, and Authelia authorization events — the signals you want when an inference endpoint is exposed to the internet.</p></div></div>
+      <div class="row"><div class="lbl">Workloads</div><div><h3>The whole cluster, one keystroke away.</h3><p>Tab through pods, deployments, statefulsets, daemonsets, services, configmaps, secrets, PVCs, ingresses, jobs and cronjobs. <code>⌘K</code> spotlight, <code>j/k</code> navigation, inline describe, scale and rolling-restart - built for keyboard speed.</p></div></div>
+      <div class="row"><div class="lbl">Pressure</div><div><h3>Per-namespace, not just per-node.</h3><p>Multi-tenant LLM serving leans on ResourceQuotas and KEDA. lens surfaces CPU/memory pressure where it matters - per namespace and per pod - so you can see which tenant is starving the others before it pages you.</p></div></div>
+      <div class="row"><div class="lbl">Security</div><div><h3>Failed-auth at a glance.</h3><p>Live counts and top offenders across fail2ban jails, SSH brute-force attempts, nginx WAF blocks, and Authelia authorization events - the signals you want when an inference endpoint is exposed to the internet.</p></div></div>
     </div>
   </section>
 
   <section>
     <h2><span class="n">03</span>Why lens</h2>
     <div class="props">
-      <div class="prop"><b>LLM-first</b><span>The headline view is your inference endpoints — not a generic pod list bolted onto a model cluster.</span></div>
+      <div class="prop"><b>LLM-first</b><span>The headline view is your inference endpoints - not a generic pod list bolted onto a model cluster.</span></div>
       <div class="prop"><b>Single-binary scope</b><span>One Bun process serves the API, the WebSocket bridge, and the SPA. No Electron download, no separate auth proxy.</span></div>
       <div class="prop"><b>In-cluster by design</b><span>Reads its bearer token from the service-account mount and proxies the API server. No kubeconfig to export, no external secrets store.</span></div>
-      <div class="prop"><b>Read-only by default</b><span>Mutations (delete, scale, restart, exec) are scoped to the RBAC you grant the ServiceAccount — nothing more.</span></div>
+      <div class="prop"><b>Read-only by default</b><span>Mutations (delete, scale, restart, exec) are scoped to the RBAC you grant the ServiceAccount - nothing more.</span></div>
       <div class="prop"><b>No tokens spent</b><span>Endpoint discovery only hits <code>/v1/models</code>. Your GPUs keep serving; lens never sends a completion.</span></div>
-      <div class="prop"><b>Light</b><span>Built for the operational reality of large, slow-starting inference pods — quick to load, quick to read.</span></div>
+      <div class="prop"><b>Light</b><span>Built for the operational reality of large, slow-starting inference pods - quick to load, quick to read.</span></div>
     </div>
   </section>
 
@@ -217,7 +217,7 @@ docker build -t lens .</pre>
   </footer>
 
 </div>
-<!-- shortlink analytics — active via the lens.pyxis3.ai reverse proxy (host-based
+<!-- shortlink analytics - active via the lens.pyxis3.ai reverse proxy (host-based
      attribution); silent on raw github.io. Tracks every link/button. -->
 <script>
 (function () {
