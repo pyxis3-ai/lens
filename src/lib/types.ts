@@ -8,7 +8,7 @@ export interface SystemMetrics {
   processes: number
 }
 
-export interface ContainerInfo {
+interface ContainerInfo {
   name: string; ready: boolean; restarts: number; state: string
   cpu: number | null; memory: number | null
   requests: { cpu: string | null; memory: number | null }
@@ -35,7 +35,7 @@ export interface Node {
   conditions: string[]
 }
 
-export interface Fail2banJail { banned: number; totalBanned: number; bannedIPs: string[]; probes: number; uniqueProbeIPs: number; probeIPs: string[] }
+interface Fail2banJail { banned: number; totalBanned: number; bannedIPs: string[]; probes: number; uniqueProbeIPs: number; probeIPs: string[] }
 export interface SecuritySummary { fail2ban: Record<string, Fail2banJail>; totalBanned: number; totalProbes: number }
 export interface NginxAttack { time: string; ip: string; method: string; uri: string; status: number; host: string; ua: string }
 export interface ServiceHealth { name: string; host: string; namespace: string; status: number; ok: boolean; latency: number; error?: string }
