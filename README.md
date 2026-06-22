@@ -22,22 +22,22 @@ LLM endpoint discovery · pod &amp; workload browser · in-browser `kubectl exec
 
 </div>
 
-<p align="center"><img src="assets/dashboard.png" alt="lens — LLM endpoint discovery: runtime, model list, and probe latency for every inference Service, with a live system bar and workload tabs" width="860" /></p>
+<p align="center"><img src="assets/dashboard.png" alt="lens - LLM endpoint discovery: runtime, model list, and probe latency for every inference Service, with a live system bar and workload tabs" width="860" /></p>
 
 ---
 
-Read-only views over your serving cluster's resources, GPU pressure visibility, and an in-browser `kubectl exec` terminal — all served from a single Bun process running inside the cluster. Built for the operational pattern of running open-source LLM inference on Kubernetes (vLLM, TGI, llama.cpp, Ollama): inspect inference pods, tail accelerator-bound workloads, and exec into a model server without leaving the browser.
+Read-only views over your serving cluster's resources, GPU pressure visibility, and an in-browser `kubectl exec` terminal - all served from a single Bun process running inside the cluster. Built for the operational pattern of running open-source LLM inference on Kubernetes (vLLM, TGI, llama.cpp, Ollama): inspect inference pods, tail accelerator-bound workloads, and exec into a model server without leaving the browser.
 
-**Demo — [app.lens.pyxis3.ai](https://app.lens.pyxis3.ai/?utm_source=github&utm_medium=readme&utm_campaign=lens)** · login required (the live cluster gates every app behind [shortlink](https://shortlink.pyxis3.ai/?utm_source=github&utm_medium=readme&utm_campaign=lens) forward-auth — one-factor, staff/admins; exec gives shell access to the live cluster). **Site — [lens.pyxis3.ai](https://lens.pyxis3.ai/?utm_source=github&utm_medium=readme&utm_campaign=lens)**.
+**Demo - [app.lens.pyxis3.ai](https://app.lens.pyxis3.ai/?utm_source=github&utm_medium=readme&utm_campaign=lens)** · login required (the live cluster gates every app behind [shortlink](https://shortlink.pyxis3.ai/?utm_source=github&utm_medium=readme&utm_campaign=lens) forward-auth - one-factor, staff/admins; exec gives shell access to the live cluster). **Site - [lens.pyxis3.ai](https://lens.pyxis3.ai/?utm_source=github&utm_medium=readme&utm_campaign=lens)**.
 
 ## What it does
 
-- **LLM / inference endpoint discovery** — scans every cluster `Service` on its declared TCP ports for an OpenAI-compatible `/v1/models` response. Auto-detects vLLM, TGI, llama.cpp, Ollama, sglang, Triton — reports model list, probe latency, and inferred runtime, refreshed every 30s. No outbound traffic, no tokens spent. *This is the headline view for an LLM-serving cluster.*
-- **Pod & workload browser** — namespaces, pods, deployments, services, configmaps, events. Built to surface the inference layer (vLLM/TGI/llama.cpp pods, KEDA scalers, ResourceQuotas per tenant).
-- **Workload actions** — restart or scale a Deployment, or delete a stuck Pod, from the browser. **Gated behind RBAC**: the default ClusterRole is read-only, so these are no-ops until you grant write access.
-- **In-browser `kubectl exec`** — open a real shell on any pod via `xterm.js` over WebSocket. Critical for AI/ML serving where you need to inspect model weights, tokenizer state, or attach to a running vLLM process.
-- **Resource pressure & alerts** — node CPU / memory / load / disk read straight from the host `/proc`, plus per-namespace allocation against requests/limits and `ResourceQuotas` — **no metrics-server required** (so no per-pod live usage or GPU utilization; GPU is shown by request/allocation). Configurable per-namespace thresholds raise alerts you can acknowledge or dismiss, streamed live over WebSocket.
-- **Security panel** — failed-auth events from collected log streams; helps when fronting LLM endpoints with `auth_request`.
+- **LLM / inference endpoint discovery** - scans every cluster `Service` on its declared TCP ports for an OpenAI-compatible `/v1/models` response. Auto-detects vLLM, TGI, llama.cpp, Ollama, sglang, Triton - reports model list, probe latency, and inferred runtime, refreshed every 30s. No outbound traffic, no tokens spent. *This is the headline view for an LLM-serving cluster.*
+- **Pod & workload browser** - namespaces, pods, deployments, services, configmaps, events. Built to surface the inference layer (vLLM/TGI/llama.cpp pods, KEDA scalers, ResourceQuotas per tenant).
+- **Workload actions** - restart or scale a Deployment, or delete a stuck Pod, from the browser. **Gated behind RBAC**: the default ClusterRole is read-only, so these are no-ops until you grant write access.
+- **In-browser `kubectl exec`** - open a real shell on any pod via `xterm.js` over WebSocket. Critical for AI/ML serving where you need to inspect model weights, tokenizer state, or attach to a running vLLM process.
+- **Resource pressure & alerts** - node CPU / memory / load / disk read straight from the host `/proc`, plus per-namespace allocation against requests/limits and `ResourceQuotas` - **no metrics-server required** (so no per-pod live usage or GPU utilization; GPU is shown by request/allocation). Configurable per-namespace thresholds raise alerts you can acknowledge or dismiss, streamed live over WebSocket.
+- **Security panel** - failed-auth events from collected log streams; helps when fronting LLM endpoints with `auth_request`.
 - Vue 3 + Vite frontend; Bun TypeScript backend.
 
 ## Why this exists
@@ -46,7 +46,7 @@ The big Kubernetes dashboards (Lens Desktop, Headlamp, Octant) are general-purpo
 
 - Inference pods are large (multi-GB model weights), slow to start, and you need to know *exactly* which one is in `ContainerCreating` versus actually serving traffic.
 - `kubectl exec` is the fastest way to confirm a vLLM/TGI process is healthy without exporting `/metrics` for every diagnostic.
-- Multi-tenant LLM serving uses `ResourceQuotas` and `KEDA` heavily — you want pressure visible per namespace, not just per node.
+- Multi-tenant LLM serving uses `ResourceQuotas` and `KEDA` heavily - you want pressure visible per namespace, not just per node.
 
 lens is single-binary scope: enough to debug an LLM-serving cluster from inside it, without a 200 MB Electron download or a separate auth proxy.
 
@@ -82,7 +82,7 @@ bun run server    # backend
 ```sh
 docker build -t lens:dev .
 # Deploy as a Deployment + ServiceAccount with the RBAC permissions you want
-# the dashboard to have — by default, read-only ClusterRole bound to the SA.
+# the dashboard to have - by default, read-only ClusterRole bound to the SA.
 ```
 
 ## Where it fits

@@ -49,7 +49,7 @@ function latencyColor(ms: number): string {
 
     <div v-if="filtered.length === 0 && !llmLoading" class="text-xs text-zinc-600 py-3 px-2 italic">
       No OpenAI-compatible inference endpoints discovered. lens probes every cluster Service on
-      its declared TCP ports for <code class="text-zinc-500">/v1/models</code> — deploy vLLM /
+      its declared TCP ports for <code class="text-zinc-500">/v1/models</code> - deploy vLLM /
       TGI / llama.cpp / Ollama and they'll appear here.
     </div>
 
@@ -83,7 +83,7 @@ function latencyColor(ms: number): string {
             </td>
             <td class="px-2 py-0.5 text-right font-mono" :class="latencyColor(e.latencyMs)">{{ e.latencyMs }}ms</td>
             <td class="px-2 py-0.5 text-zinc-600 max-w-64 truncate" :title="e.servedBy">
-              {{ e.servedBy || '—' }}
+              {{ e.servedBy || '-' }}
             </td>
           </tr>
         </tbody>
@@ -92,7 +92,7 @@ function latencyColor(ms: number): string {
 
     <p class="text-xs text-zinc-700 mt-3 px-2">
       In-cluster probe of <code class="text-zinc-500">/v1/models</code> on every Service.
-      Cached 30s. No tokens are spent — only the model-list endpoint is hit.
+      Cached 30s. No tokens are spent - only the model-list endpoint is hit.
     </p>
   </div>
 </template>
