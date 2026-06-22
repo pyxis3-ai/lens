@@ -19,7 +19,6 @@
     "@vitejs/plugin-vue": "*",
     "typescript": "*",
     "vite": "*",
-    "vue-tsc": "*",
     "@types/bun": "*",
     "@types/node": "*"
   }
