@@ -120,7 +120,7 @@ function evaluateAlerts(system: SystemMetrics, pods: any[]) {
   else resolve('pods-nolimits')
 }
 
-export function getActiveAlerts(): Alert[] {
+function getActiveAlerts(): Alert[] {
   return [...activeAlerts.values()]
 }
 
