@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>lens - see what's serving your models · AI/LLM observability for Kubernetes</title>
+<meta name="description" content="In-cluster observability for LLM and AI/ML serving on Kubernetes. Discover every OpenAI-compatible inference endpoint, browse pods and workloads, watch per-namespace pressure, and kubectl exec into a model server - from the browser, from a single Bun binary." />
+<meta property="og:title" content="lens - see what's serving your models" />
+<meta property="og:description" content="AI/LLM observability for Kubernetes: endpoint discovery, workload browser, in-browser kubectl exec, resource pressure, alerts. Single Bun binary, in-cluster SA-token auth." />
+<meta property="og:type" content="website" />
+<style>
+  :root {
+    --bg: #09090b; --panel: rgba(24,24,27,0.4); --border: #27272a; --border-soft: rgba(39,39,42,0.5);
+    --text: #d4d4d8; --bright: #fafafa; --muted: #71717a; --faint: #52525b;
+    --accent: #34d399; --accent-dim: #10b981; --amber: #fbbf24; --red: #f87171; --blue: #60a5fa; --violet: #c084fc;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased;
+    font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: var(--bright); }
+  code { color: var(--accent); }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+  section { padding: 56px 0; border-top: 1px solid var(--border); }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted); margin-bottom: 28px; }
+  h2 .n { color: var(--faint); margin-right: 10px; }
+
+  /* hero */
+  .hero { padding: 88px 0 48px; text-align: center; border: 0; }
+  .logo { font-size: clamp(34px,7vw,56px); font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--bright); }
+  .logo .dot { color: var(--accent); }
+  .headline { margin-top: 22px; font-size: clamp(26px,5vw,44px); font-weight: 700; color: var(--bright); line-height: 1.15; letter-spacing: -0.01em; }
+  .headline em { color: var(--accent); font-style: normal; }
+  .lede { margin: 18px auto 0; max-width: 64ch; font-size: clamp(14px,2.2vw,16px); color: var(--text); }
+  .cta { margin-top: 30px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 22px; border-radius: 6px; font-size: 14px; transition: all .15s; border: 1px solid var(--border); }
+  .btn.primary { background: var(--accent-dim); color: #04140d; border-color: var(--accent-dim); font-weight: 600; }
+  .btn.primary:hover { background: var(--accent); }
+  .btn.ghost { color: var(--text); }
+  .btn.ghost:hover { border-color: var(--muted); color: var(--bright); }
+  .chips { margin-top: 26px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .chip { font-size: 12px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; }
+  .chip b { color: var(--accent); font-weight: 600; }
+
+  /* dashboard mockup */
+  .shot { margin: 44px auto 0; max-width: 820px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: #0b0b0d; box-shadow: 0 20px 60px -20px rgba(0,0,0,0.8); text-align: left; }
+  .shot-bar { display: flex; align-items: center; gap: 7px; padding: 9px 12px; border-bottom: 1px solid var(--border); background: #131316; }
+  .tl { width: 11px; height: 11px; border-radius: 50%; }
+  .tl.r { background: #f87171; } .tl.y { background: #fbbf24; } .tl.g { background: #34d399; }
+  .shot-url { margin-left: 10px; font-size: 12px; color: var(--faint); }
+  .shot-body { padding: 12px 14px; font-size: 12px; }
+  .app-head { display: flex; align-items: center; gap: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-soft); }
+  .app-head b { color: var(--bright); letter-spacing: 0.1em; font-size: 12px; }
+  .app-head .sp { margin-left: auto; }
+  .app-head .conn { color: var(--accent); }
+  .kbd { font-size: 10px; color: var(--faint); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; }
+  .sys { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 10px 0; color: var(--muted); border-bottom: 1px solid var(--border-soft); }
+  .sys .m { display: flex; align-items: center; gap: 6px; }
+  .bar { display: inline-block; width: 46px; height: 9px; background: #27272a; border-radius: 2px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--accent-dim); }
+  .bar i.a { background: var(--amber); }
+  .tabs { display: flex; gap: 6px; padding: 10px 0 12px; }
+  .tab { font-size: 11px; padding: 2px 9px; border-radius: 4px; color: var(--muted); }
+  .tab.on { background: #27272a; color: var(--text); }
+  .tab .c { color: var(--faint); margin-left: 5px; }
+  table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+  th { text-align: left; color: var(--faint); font-weight: 400; padding: 4px 8px; border-bottom: 1px solid var(--border-soft); }
+  th.r, td.r { text-align: right; }
+  td { padding: 4px 8px; border-bottom: 1px solid rgba(39,39,42,0.25); color: var(--text); }
+  td .ns { color: var(--muted); }
+  .pill { background: rgba(39,39,42,0.6); color: var(--text); border-radius: 4px; padding: 1px 7px; margin-right: 4px; font-size: 10.5px; }
+  .ok { color: var(--accent); } .warn { color: var(--amber); } .err { color: var(--red); }
+  .rt-vllm { color: var(--accent); } .rt-tgi { color: var(--amber); } .rt-ollama { color: var(--blue); } .rt-sglang { color: var(--violet); }
+
+  /* feature grid */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 18px; }
+  .card h3 { font-size: 14px; color: var(--bright); margin-bottom: 6px; }
+  .card h3 .mk { color: var(--accent); margin-right: 8px; }
+  .card p { font-size: 13px; color: var(--muted); }
+
+  /* closer look */
+  .look { display: grid; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .row { display: grid; grid-template-columns: 160px 1fr; gap: 20px; padding: 22px 24px; background: var(--bg); }
+  .row .lbl { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); padding-top: 3px; }
+  .row h3 { font-size: 16px; color: var(--bright); margin-bottom: 6px; }
+  .row p { font-size: 13.5px; color: var(--muted); max-width: 64ch; }
+  .row p code { font-size: 12.5px; }
+  @media (max-width: 620px) { .row { grid-template-columns: 1fr; gap: 8px; } }
+
+  .props { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 14px; }
+  .prop { border-left: 2px solid var(--accent-dim); padding: 2px 0 2px 16px; }
+  .prop b { color: var(--bright); font-size: 14px; display: block; margin-bottom: 4px; }
+  .prop span { color: var(--muted); font-size: 13px; }
+
+  .arch { font-size: 12px; line-height: 1.55; color: var(--muted); white-space: pre; overflow-x: auto; }
+  .stack { margin-top: 20px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .stack span { font-size: 12px; color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 4px 11px; }
+  pre { background: #0c0c0e; border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; overflow-x: auto; font-size: 13px; color: var(--text); }
+  pre .c { color: var(--faint); }
+
+  .close { text-align: center; }
+  .close h3 { font-size: clamp(22px,4vw,32px); color: var(--bright); margin-bottom: 22px; font-weight: 700; }
+  footer { padding: 36px 0 64px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="logo">lens<span class="dot">.</span></div>
+    <h1 class="headline">See what's <em>actually serving</em> your models.</h1>
+    <p class="lede">In-cluster observability for LLM &amp; AI/ML serving on Kubernetes - discover every OpenAI-compatible endpoint, browse pods and workloads, watch per-namespace pressure, and <code>kubectl exec</code> into a model server, right from the browser.</p>
+    <div class="cta">
+      <a class="btn primary" href="https://app.lens.pyxis3.ai/?utm_source=githubpages&utm_medium=landing&utm_campaign=lens" target="_blank" rel="noopener">Live demo →</a>
+      <a class="btn ghost" href="https://github.com/pyxis3-ai/lens" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <div class="chips">
+      <span class="chip"><b>MIT</b> licensed</span>
+      <span class="chip">Single <b>Bun</b> binary</span>
+      <span class="chip">In-cluster <b>SA-token</b> auth</span>
+      <span class="chip"><b>Read-only</b> by default</span>
+    </div>
+
+    <div class="shot" aria-label="lens dashboard preview">
+      <div class="shot-bar"><span class="tl r"></span><span class="tl y"></span><span class="tl g"></span><span class="shot-url">app.lens.pyxis3.ai</span></div>
+      <div class="shot-body">
+        <div class="app-head"><b>LENS</b><span class="sp"></span><span class="kbd">⌘K search</span><span class="conn">●</span></div>
+        <div class="sys">
+          <div class="m">CPU <span class="bar"><i style="width:34%"></i></span> 34%</div>
+          <div class="m">MEM <span class="bar"><i style="width:61%"></i></span> 61%</div>
+          <div class="m">SWP <span class="bar"><i style="width:0"></i></span> 0%</div>
+          <div class="m">DSK <span class="bar"><i class="a" style="width:78%"></i></span> 78%</div>
+          <div class="m" style="margin-left:auto"><span class="ok">↓</span>1.2M/s <span class="rt-ollama">↑</span>340K/s · load 0.8 · up 12d</div>
+        </div>
+        <div class="tabs"><span class="tab on">llm<span class="c">3</span></span><span class="tab">pods<span class="c">47</span></span><span class="tab">deploy<span class="c">12</span></span><span class="tab">events</span><span class="tab">security</span></div>
+        <table>
+          <thead><tr><th>NS</th><th>SERVICE</th><th>RUNTIME</th><th>MODELS</th><th class="r">LATENCY</th></tr></thead>
+          <tbody>
+            <tr><td><span class="ns">inference</span></td><td>vllm-qwen</td><td class="rt-vllm">vllm</td><td><span class="pill">qwen2.5-72b-instruct</span></td><td class="r ok">12ms</td></tr>
+            <tr><td><span class="ns">inference</span></td><td>tgi-mixtral</td><td class="rt-tgi">tgi</td><td><span class="pill">mixtral-8x7b</span></td><td class="r ok">28ms</td></tr>
+            <tr><td><span class="ns">ollama</span></td><td>ollama</td><td class="rt-ollama">ollama</td><td><span class="pill">llama3.1:8b</span><span class="pill">phi3</span><span style="color:var(--faint)">+2</span></td><td class="r warn">63ms</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="n">01</span>What it does</h2>
+    <div class="grid">
+      <div class="card"><h3><span class="mk">◆</span>LLM endpoint discovery</h3><p>Probes every cluster Service on its declared TCP ports for an OpenAI-compatible <code>/v1/models</code> response. Auto-detects vLLM, TGI, llama.cpp, Ollama, sglang, Triton - model list, probe latency, inferred runtime. No tokens spent.</p></div>
+      <div class="card"><h3><span class="mk">◆</span>Pod &amp; workload browser</h3><p>Pods, deployments, statefulsets, services, configmaps, secrets, PVCs, ingresses, jobs, cronjobs, events, certificates - a fast keyboard-driven table for the whole cluster.</p></div>
+      <div class="card"><h3><span class="mk">◆</span>In-browser kubectl exec</h3><p>A real shell on any container via xterm.js over WebSocket. Inspect model weights, tokenizer state, or attach to a running vLLM process - no terminal, no kubeconfig.</p></div>
+      <div class="card"><h3><span class="mk">◆</span>Resource pressure</h3><p>Live per-node and per-pod CPU/memory from the metrics API, surfaced for multi-tenant serving where one heavy workload can starve its neighbours.</p></div>
+      <div class="card"><h3><span class="mk">◆</span>Alerts &amp; thresholds</h3><p>Editable CPU/memory/disk/swap/load thresholds, OOMKill and crash-loop detection, plus cert-expiry warnings - pushed live over WebSocket with optional webhook.</p></div>
+      <div class="card"><h3><span class="mk">◆</span>Security panel</h3><p>fail2ban jails, SSH brute-force, nginx WAF/ModSecurity blocks, and Authelia auth events from collected log streams - useful when fronting LLM endpoints.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">02</span>A closer look</h2>
+    <div class="look">
+      <div class="row"><div class="lbl">Discovery</div><div><h3>Every endpoint, auto-detected.</h3><p>lens enumerates every Service, ranks candidates by container-image heuristics, and probes <code>/v1/models</code> in batches with a 1.5 s timeout. Runtime is read from <code>data[0].owned_by</code>, then the <code>Server</code> header, then the image. Only the model-list endpoint is hit - never a completion - so discovery costs zero tokens.</p></div></div>
+      <div class="row"><div class="lbl">Exec</div><div><h3>A real shell, in the browser.</h3><p>Open <code>/bin/sh</code> on any container over the Kubernetes exec WebSocket, bridged through xterm.js with full TTY and live resize. The fastest way to confirm a vLLM/TGI process is healthy without exporting <code>/metrics</code> for every diagnostic.</p></div></div>
+      <div class="row"><div class="lbl">Workloads</div><div><h3>The whole cluster, one keystroke away.</h3><p>Tab through pods, deployments, statefulsets, daemonsets, services, configmaps, secrets, PVCs, ingresses, jobs and cronjobs. <code>⌘K</code> spotlight, <code>j/k</code> navigation, inline describe, scale and rolling-restart - built for keyboard speed.</p></div></div>
+      <div class="row"><div class="lbl">Pressure</div><div><h3>Per-namespace, not just per-node.</h3><p>Multi-tenant LLM serving leans on ResourceQuotas and KEDA. lens surfaces CPU/memory pressure where it matters - per namespace and per pod - so you can see which tenant is starving the others before it pages you.</p></div></div>
+      <div class="row"><div class="lbl">Security</div><div><h3>Failed-auth at a glance.</h3><p>Live counts and top offenders across fail2ban jails, SSH brute-force attempts, nginx WAF blocks, and Authelia authorization events - the signals you want when an inference endpoint is exposed to the internet.</p></div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">03</span>Why lens</h2>
+    <div class="props">
+      <div class="prop"><b>LLM-first</b><span>The headline view is your inference endpoints - not a generic pod list bolted onto a model cluster.</span></div>
+      <div class="prop"><b>Single-binary scope</b><span>One Bun process serves the API, the WebSocket bridge, and the SPA. No Electron download, no separate auth proxy.</span></div>
+      <div class="prop"><b>In-cluster by design</b><span>Reads its bearer token from the service-account mount and proxies the API server. No kubeconfig to export, no external secrets store.</span></div>
+      <div class="prop"><b>Read-only by default</b><span>Mutations (delete, scale, restart, exec) are scoped to the RBAC you grant the ServiceAccount - nothing more.</span></div>
+      <div class="prop"><b>No tokens spent</b><span>Endpoint discovery only hits <code>/v1/models</code>. Your GPUs keep serving; lens never sends a completion.</span></div>
+      <div class="prop"><b>Light</b><span>Built for the operational reality of large, slow-starting inference pods - quick to load, quick to read.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">04</span>Under the hood</h2>
+    <div class="arch">  Vue 3 SPA  ──HTTPS / WS──▶  Bun server (TS)  ──K8s API──▶  control plane
+  xterm.js   ◀───────────────  • REST proxy
+                               • exec WS bridge
+                               • SA-token rotation</div>
+    <p style="margin-top:18px;color:var(--muted);font-size:13px;max-width:64ch">The server reads its bearer token from the standard service-account mount and proxies authenticated calls to the API server. Metrics come from <code>/proc</code> and the metrics API; nginx, fail2ban and Authelia signals from mounted log streams. All in one container.</p>
+    <div class="stack"><span>Bun</span><span>TypeScript</span><span>Vue 3</span><span>Vite</span><span>Tailwind v4</span><span>xterm.js</span><span>SQLite</span><span>WebSocket</span></div>
+  </section>
+
+  <section>
+    <h2><span class="n">05</span>Run it</h2>
+    <pre><span class="c"># requires Bun + access to a cluster (kind / k3d / k0s work)</span>
+bun install
+bun run dev       <span class="c"># frontend</span>
+bun run server    <span class="c"># backend</span>
+
+<span class="c"># or build the image and deploy with a read-only ClusterRole</span>
+docker build -t lens .</pre>
+  </section>
+
+  <section class="close">
+    <h3>Inspect your serving cluster<br />from inside it.</h3>
+    <div class="cta">
+      <a class="btn primary" href="https://app.lens.pyxis3.ai/?utm_source=githubpages&utm_medium=landing&utm_campaign=lens" target="_blank" rel="noopener">Live demo →</a>
+      <a class="btn ghost" href="https://github.com/pyxis3-ai/lens" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </section>
+
+  <footer>
+    <span>Open-source AI/LLM-infrastructure tooling by <a href="https://pyxis3.ai/?utm_source=githubpages&utm_medium=landing&utm_campaign=lens" target="_blank" rel="noopener">PYXIS3</a>.</span>
+    <span><a href="https://github.com/pyxis3-ai/lens">Source</a> · MIT License</span>
+  </footer>
+
+</div>
+<!-- shortlink analytics - active via the lens.pyxis3.ai reverse proxy (host-based
+     attribution); silent on raw github.io. Tracks every link/button. -->
+<script>
+(function () {
+  var H = location.hostname;
+  if (!/\.pyxis3\.ai$/.test(H)) return;
+  var q = new URLSearchParams(location.search);
+  var cid = q.get('sl_cid') || '';
+  var utm = new URLSearchParams();
+  q.forEach(function (v, k) { if (/^utm_/.test(k)) utm.set(k, v); });
+  var J = function (b) { return new Blob([JSON.stringify(b)], { type: 'application/json' }); };
+  function ev(name, value) { try { navigator.sendBeacon('/api/event', J({ host: H, name: name, value: value || 0, cid: cid })); } catch (e) {} }
+  function conv(label, value) { new Image().src = '/api/conv?host=' + encodeURIComponent(H) + '&label=' + encodeURIComponent(label) + '&value=' + (value || 0) + '&cid=' + cid; }
+  window.lensTrack = ev;
+  ev('visit');
+  if (utm.toString()) document.querySelectorAll('a[href*=".pyxis3.ai"]').forEach(function (a) {
+    try { var u = new URL(a.href); utm.forEach(function (v, k) { if (!u.searchParams.has(k)) u.searchParams.set(k, v); }); a.href = u.toString(); } catch (e) {}
+  });
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a,button'); if (!a) return;
+    var h = a.getAttribute('href') || a.getAttribute('data-ev') || (a.textContent || '').trim();
+    if (/app\.lens/i.test(h))             { ev('launch');  conv('launch'); }
+    else if (/buy\.stripe/i.test(h))      { ev('sponsor'); conv('sponsor'); }
+    else if (/donate\.stripe/i.test(h))   { ev('donate');  conv('donate'); }
+    else if (/github\.com/i.test(h))        ev('github');
+    else if (/^#/.test(h))                  ev('nav');
+    else if (/pyxis3\.ai/i.test(h))         ev('pyxis3');
+    else                                    ev('click');
+  }, true);
+})();
+</script>
+</body>
+</html>
