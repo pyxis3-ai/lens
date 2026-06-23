@@ -6,9 +6,7 @@
 
 LLM endpoint discovery · pod &amp; workload browser · in-browser `kubectl exec` · per-namespace resource pressure · security panel
 
-[![Site](https://img.shields.io/badge/lens.pyxis3.ai-10b981?style=flat-square&logo=googlechrome&logoColor=white)](https://lens.pyxis3.ai/?utm_source=github&utm_medium=readme&utm_campaign=lens)
 [![Demo](https://img.shields.io/badge/demo-app.lens.pyxis3.ai-326CE5?style=flat-square&logo=kubernetes&logoColor=white)](https://app.lens.pyxis3.ai/?utm_source=github&utm_medium=readme&utm_campaign=lens)
-[![License: MIT](https://img.shields.io/badge/License-MIT-3da639?style=flat-square)](LICENSE)
 [![Bun](https://img.shields.io/badge/Bun-14151a?logo=bun&logoColor=fbf0df&style=flat-square)](https://bun.sh)
 [![Vue 3](https://img.shields.io/badge/Vue%203-4FC08D?logo=vuedotjs&logoColor=fff&style=flat-square)](https://vuejs.org)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?logo=kubernetes&logoColor=fff&style=flat-square)](https://kubernetes.io)
@@ -28,7 +26,7 @@ LLM endpoint discovery · pod &amp; workload browser · in-browser `kubectl exec
 
 Read-only views over your serving cluster's resources, GPU pressure visibility, and an in-browser `kubectl exec` terminal - all served from a single Bun process running inside the cluster. Built for the operational pattern of running open-source LLM inference on Kubernetes (vLLM, TGI, llama.cpp, Ollama): inspect inference pods, tail accelerator-bound workloads, and exec into a model server without leaving the browser.
 
-**Demo - [app.lens.pyxis3.ai](https://app.lens.pyxis3.ai/?utm_source=github&utm_medium=readme&utm_campaign=lens)** · login required (the live cluster gates every app behind [shortlink](https://shortlink.pyxis3.ai/?utm_source=github&utm_medium=readme&utm_campaign=lens) forward-auth - one-factor, staff/admins; exec gives shell access to the live cluster). **Site - [lens.pyxis3.ai](https://lens.pyxis3.ai/?utm_source=github&utm_medium=readme&utm_campaign=lens)**.
+**Demo - [app.lens.pyxis3.ai](https://app.lens.pyxis3.ai/?utm_source=github&utm_medium=readme&utm_campaign=lens)** · login required (the live cluster gates every app behind [shortlink](https://shortlink.pyxis3.ai/?utm_source=github&utm_medium=readme&utm_campaign=lens) forward-auth - one-factor, staff/admins; exec gives shell access to the live cluster).
 
 ## What it does
 
