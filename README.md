@@ -92,3 +92,21 @@ Open-source AI-/LLM-infrastructure tooling published by [PYXIS3](https://pyxis3.
 ## Status
 
 Single-developer project, used in production on the PYXIS3 homelab cluster. Read-only by default; `exec` and all write actions (scale / restart / delete) are gated behind RBAC.
+
+## Contributing
+
+Issues, ideas, and PRs are welcome - keep PRs focused on a single concern and follow the existing conventions. Run `bun run build` and `bunx tsc --noEmit` before submitting. Since lens talks to a live Kubernetes API, verifying against a real (or `kind` / `k3d` / `k0s`) cluster is especially valued.
+
+## Support & sponsors
+
+lens is free, open-source, and has no tracking or ads. If it's useful to you, you can support continued development - pay what you like, once or monthly:
+
+<p align="center">
+  <a href="https://donate.stripe.com/3cI6oI7Gh1PG0eV8MJ5kk00"><img src="https://img.shields.io/badge/%20Donate%20once-pay%20what%20you%20like-635bff?logo=stripe&logoColor=white" alt="Donate once via Stripe" height="30" /></a>
+  &nbsp;
+  <a href="https://buy.stripe.com/00wbJ2f8J51S9Pv1kh5kk01"><img src="https://img.shields.io/badge/%20Sponsor%20monthly-recurring-56c4e6?logo=stripe&logoColor=white" alt="Sponsor monthly via Stripe" height="30" /></a>
+</p>
+
+## License
+
+[MIT](LICENSE) © 2026 Omar A.
